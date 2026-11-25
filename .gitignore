@@ -38,3 +38,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# media uploads & processed videos
+public/uploads/*
+!public/uploads/.gitkeep
+public/processed/*
+!public/processed/.gitkeep
+public/voiceovers/*
+!public/voiceovers/.gitkeep
+
+# docs binaries
+Docs/*.mp4
+Docs/Software/*.exe
+Docs/hello-next2/
+
+# docs software large inputs and outputs
+Docs/Software/_input/
+Docs/Software/_output/
