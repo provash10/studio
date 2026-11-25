@@ -112,13 +112,7 @@ export default function AudioVoiceStudio({
 			);
 			return;
 		}
-		if (!elevenApiKey.trim()) {
-			alert(
-				"Please enter your ElevenLabs API Key, or switch to the '🎙️ Record Mic' tab to record with your own voice for free!",
-			);
-			return;
-		}
-
+		// Allow ElevenLabs or fallback to Studio AI Voice Engine automatically
 		setIsGeneratingVoice(true);
 		try {
 			const res = await fetch("/api/ai/tts", {
@@ -127,7 +121,7 @@ export default function AudioVoiceStudio({
 				body: JSON.stringify({
 					text: scriptText,
 					voiceId: elevenVoiceId,
-					apiKey: elevenApiKey,
+					apiKey: elevenApiKey || undefined,
 				}),
 			});
 			const data = await res.json();

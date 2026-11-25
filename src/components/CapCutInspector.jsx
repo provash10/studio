@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
 	Shield,
 	VolumeX,
@@ -79,6 +79,20 @@ export default function CapCutInspector({
 	const [elevenVoiceId, setElevenVoiceId] = useState("21m00Tcm4TlvDq8ikWAM");
 	const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
 
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			const saved = localStorage.getItem("studio_elevenlabs_key");
+			if (saved) setElevenApiKey(saved);
+		}
+	}, []);
+
+	const handleElevenApiKeyChange = (val) => {
+		setElevenApiKey(val);
+		if (typeof window !== "undefined") {
+			localStorage.setItem("studio_elevenlabs_key", val);
+		}
+	};
+
 	const handleGenerateScript = async () => {
 		setIsGeneratingScript(true);
 		try {
@@ -103,11 +117,7 @@ export default function CapCutInspector({
 
 	const handleGenerateElevenLabs = async () => {
 		if (!scriptText.trim()) {
-			alert("Please click 'Generate Rephrased Script' first!");
-			return;
-		}
-		if (!elevenApiKey.trim()) {
-			alert("Please paste your ElevenLabs API Key!");
+			alert("Please click 'Generate Rephrased' first to write a script!");
 			return;
 		}
 		setIsGeneratingVoice(true);
@@ -118,13 +128,15 @@ export default function CapCutInspector({
 				body: JSON.stringify({
 					text: scriptText,
 					voiceId: elevenVoiceId,
-					apiKey: elevenApiKey,
+					apiKey: elevenApiKey || undefined,
 				}),
 			});
 			const data = await res.json();
 			if (data.success && data.fileName) {
 				setVoiceoverFileName(data.fileName);
 				setVoiceoverEnabled(true);
+			} else {
+				alert(data.error || "Failed to generate voiceover");
 			}
 		} catch (err) {
 			alert(err.message);
@@ -634,9 +646,9 @@ export default function CapCutInspector({
 							</span>
 							<input
 								type="password"
-								placeholder="Paste ElevenLabs API Key..."
+								placeholder="Paste ElevenLabs API Key (or leave blank for built-in)..."
 								value={elevenApiKey}
-								onChange={(e) => setElevenApiKey(e.target.value)}
+								onChange={(e) => handleElevenApiKeyChange(e.target.value)}
 								className="bg-[#1a1b20] border border-[#2b2d35] rounded p-1.5 text-[11px] text-white focus:outline-none focus:border-[#00e5ff]"
 							/>
 							<div className="flex items-center gap-2">

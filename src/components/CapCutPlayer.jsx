@@ -43,6 +43,7 @@ export default function CapCutPlayer({
 	// New requested buttons & preview states
 	onCreateVideo,
 	isCreatingVideo = false,
+	creatingStatus = "",
 	processedVideoUrl = null,
 	previewMode = "raw", // 'raw' or 'copyright_free'
 	setPreviewMode,
@@ -175,7 +176,7 @@ export default function CapCutPlayer({
 						{isCreatingVideo ? (
 							<>
 								<Loader2 className="w-3.5 h-3.5 animate-spin text-[#00e5ff]" />
-								<span>Creating Video...</span>
+								<span>{creatingStatus || "Creating Video..."}</span>
 							</>
 						) : (
 							<>
@@ -292,6 +293,21 @@ export default function CapCutPlayer({
 						<div className="absolute top-3 bg-black/90 text-[#00e5ff] border border-[#00e5ff]/50 px-3 py-1 rounded-full text-[10px] font-bold z-30 flex items-center gap-1.5 shadow-lg animate-in fade-in">
 							<Check className="w-3 h-3 text-[#00e5ff]" />
 							<span>{isCopyrightFreeActive ? "Playing Copyright-Free Preview!" : "Live Preview Updated!"}</span>
+						</div>
+					)}
+
+					{/* Active Rendering Progress Overlay */}
+					{isCreatingVideo && (
+						<div className="absolute inset-0 bg-black/80 z-40 flex flex-col items-center justify-center gap-2.5 backdrop-blur-sm p-4 text-center">
+							<Loader2 className="w-7 h-7 text-[#00e5ff] animate-spin" />
+							<div className="flex flex-col gap-1">
+								<span className="text-white font-bold text-xs tracking-wide">
+									{creatingStatus || "Creating Anti-Copyright Video..."}
+								</span>
+								<span className="text-slate-400 text-[10px]">
+									Voice script + ElevenLabs/TTS voiceover + 8 visual defenses
+								</span>
+							</div>
 						</div>
 					)}
 				</div>

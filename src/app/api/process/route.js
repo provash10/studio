@@ -157,7 +157,7 @@ export async function POST(request) {
 		// 2. Safe Zoom & Headroom Protection (Docs formula: 1.02x with top headroom anchor)
 		if (applyZoom) {
 			filters.push(
-				`${baseV}crop=w='2*trunc(iw/1.02/2)':h='2*trunc(ih/1.02/2)':x='(in_w-out_w)/2':y='(in_h-out_h)*0.05',boxblur=1:1,scale=w='2*trunc(iw*1.02/2)':h='2*trunc(ih*1.02/2)'[vzoom]`,
+				`${baseV}crop=w='2*trunc(iw/1.02/2)':h='2*trunc(ih/1.02/2)':x='(in_w-out_w)/2':y='(in_h-out_h)*0.05',scale=w='2*trunc(iw*1.02/2)':h='2*trunc(ih*1.02/2)'[vzoom]`,
 			);
 			baseV = "[vzoom]";
 		}
@@ -258,15 +258,24 @@ export async function POST(request) {
 		}
 
 		// Audio Mix Combine
-		let finalAudioLabel = "[0:a]";
+		let finalAudioLabel = "";
 		if (audioMixLabels.length > 1) {
 			filters.push(
-				`${audioMixLabels.join("")}amix=inputs=${audioMixLabels.length}:duration=first:dropout_transition=3[aout]`,
+				`${audioMixLabels.join("")}amix=inputs=${audioMixLabels.length}:duration=first:dropout_transition=2[aout]`,
 			);
 			finalAudioLabel = "[aout]";
 		} else if (audioMixLabels.length === 1) {
 			finalAudioLabel = audioMixLabels[0];
+		} else {
+			// If everything is muted and no audio tracks exist, create silent audio track
+			filters.push(`aevalsrc=0:d=${Math.ceil(targetDuration)}[asilence]`);
+			finalAudioLabel = "[asilence]";
 		}
+
+		// Calculate target duration so FFmpeg never runs into infinite BGM loop
+		const targetDuration = (trim.enabled && trim.end > trim.start)
+			? (trim.end - trim.start)
+			: (metadata.duration || 36.2);
 
 		// Assemble FFmpeg execution args
 		ffmpegArgs.push("-filter_complex", filters.join(";"));
@@ -279,11 +288,14 @@ export async function POST(request) {
 			"-c:v",
 			"libx264",
 			"-preset",
-			"fast",
+			"veryfast",
 			"-crf",
 			"23",
 			"-pix_fmt",
 			"yuv420p",
+			"-shortest", // Stop encoding as soon as the shortest stream ends
+			"-t",
+			Math.ceil(targetDuration).toString(), // Absolute duration limit
 			"-map_metadata",
 			"-1", // Clear metadata for 100% clean identity
 			"-movflags",

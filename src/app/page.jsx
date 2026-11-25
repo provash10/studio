@@ -52,9 +52,10 @@ export default function CapCutStudio() {
 	const [activeTopTab, setActiveTopTab] = useState("media");
 
 	// Voiceover States
-	const [voiceoverEnabled, setVoiceoverEnabled] = useState(false);
+	const [voiceoverEnabled, setVoiceoverEnabled] = useState(true);
 	const [voiceoverFileName, setVoiceoverFileName] = useState(null);
 	const [voiceoverVolume, setVoiceoverVolume] = useState(1.2);
+	const [creatingStatus, setCreatingStatus] = useState("");
 
 	// Mode Switcher: 'auto' (1-click all safeguards) vs 'manual' (show all sliders & controls)
 	const [editMode, setEditMode] = useState("auto");
@@ -146,7 +147,60 @@ export default function CapCutStudio() {
 		setErrorMessage("");
 
 		try {
-			console.log("create video request initiated with anti-copyright filters");
+			let currentVoice = voiceoverFileName;
+			let voiceActive = voiceoverEnabled;
+
+			// If no voiceover track has been created yet, automatically generate AI script & synthesize ElevenLabs/TTS voiceover
+			if (!currentVoice) {
+				setCreatingStatus("1/3 Writing viral AI commentary script...");
+				let script = "";
+				try {
+					const scriptRes = await fetch("/api/ai/script", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							prompt: videoTitle || "ভিডিওটির ড্রামাটিক ক্লাইম্যাক্স ও আকর্ষণীয় ধারাভাষ্য",
+							language: "bn",
+							provider: "auto",
+							videoTitle,
+						}),
+					});
+					const scriptData = await scriptRes.json();
+					script = scriptData.script || "";
+				} catch (sErr) {
+					console.warn("Script generation note:", sErr);
+				}
+
+				if (!script) {
+					script = "Wait until you see what happens next in this incredible video! Watch closely right now!";
+				}
+
+				setCreatingStatus("2/3 Synthesizing AI voiceover (ElevenLabs / Audio Studio)...");
+				try {
+					const savedElevenKey = typeof window !== "undefined" ? localStorage.getItem("studio_elevenlabs_key") : "";
+					const ttsRes = await fetch("/api/ai/tts", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							text: script,
+							voiceId: "21m00Tcm4TlvDq8ikWAM",
+							apiKey: savedElevenKey || undefined,
+						}),
+					});
+					const ttsData = await ttsRes.json();
+					if (ttsData.success && ttsData.fileName) {
+						currentVoice = ttsData.fileName;
+						voiceActive = true;
+						setVoiceoverFileName(ttsData.fileName);
+						setVoiceoverEnabled(true);
+					}
+				} catch (vErr) {
+					console.warn("TTS synthesis note:", vErr);
+				}
+			}
+
+			setCreatingStatus("3/3 Rendering anti-copyright video with FFmpeg...");
+			console.log("create video request initiated with anti-copyright filters and voiceover");
 			const res = await fetch("/api/process", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -168,17 +222,17 @@ export default function CapCutStudio() {
 					contrast,
 					saturation,
 					speedShift: true,
-					muteOriginalAudio,
-					originalAudioVolume: muteOriginalAudio ? 0 : 0.35,
+					muteOriginalAudio: true, // 100% original audio muted
+					originalAudioVolume: 0,
 					applyAudioEqualizer: true,
 					stereoDelay: 20,
-					bgmEnabled,
-					bgmTrackName,
-					bgmVolume,
-					metadataClean,
-					voiceoverEnabled,
-					voiceoverFileName,
-					voiceoverVolume,
+					bgmEnabled: true,
+					bgmTrackName: bgmTrackName || "bg3.mp4",
+					bgmVolume: 0.25,
+					metadataClean: true,
+					voiceoverEnabled: Boolean(currentVoice),
+					voiceoverFileName: currentVoice,
+					voiceoverVolume: 1.25,
 				}),
 			});
 
@@ -200,6 +254,7 @@ export default function CapCutStudio() {
 			return null;
 		} finally {
 			setIsCreatingVideo(false);
+			setCreatingStatus("");
 		}
 	};
 
@@ -353,6 +408,7 @@ export default function CapCutStudio() {
 						// Video Creation & Preview Controls
 						onCreateVideo={handleCreateVideo}
 						isCreatingVideo={isCreatingVideo}
+						creatingStatus={creatingStatus}
 						processedVideoUrl={processedVideoUrl}
 						previewMode={previewMode}
 						setPreviewMode={setPreviewMode}
