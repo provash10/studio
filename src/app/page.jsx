@@ -170,8 +170,8 @@ export default function CapCutStudio() {
 
 			{/* 2. CapCut Middle Workspace (3 Columns: Left Panel Expanded, Center Player, Right Panel Expanded) */}
 			<div className="flex-1 flex overflow-hidden">
-				{/* Column 1: Left Media Shelf & Left Editing Checklist (Expanded to 360px to fill the left red mark) */}
-				<div className="w-[360px] h-full shrink-0">
+				{/* Column 1: Left Media Shelf & Left Editing Checklist (Expanded to 410px to perfectly fit CapCut top tools and media shelf) */}
+				<div className="w-[410px] h-full shrink-0">
 					<CapCutMediaLibrary
 						onFileUpload={handleFileUpload}
 						onLoadSample={handleLoadSample}
