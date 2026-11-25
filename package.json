@@ -2,9 +2,11 @@
   "name": "studio",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "electron": "electron .",
     "build:exe": "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe /target:winexe /out:Studio.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll src\\launcher\\StudioLauncher.cs",
     "start": "next start",
     "lint": "biome lint ./src",
@@ -28,6 +30,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^45.5.0",
     "tailwindcss": "^4",
     "typescript": "^5.8.2"
   }

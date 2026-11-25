@@ -17,7 +17,7 @@ namespace StudioApp
 
             try
             {
-                // Check if server is already running on port 3000
+                // 1. Check if server is already running on port 3000
                 if (!IsPortOpen("http://localhost:3000"))
                 {
                     // Start Next.js server in the background without showing any console window
@@ -49,11 +49,33 @@ namespace StudioApp
 
                     if (!isReady)
                     {
-                        MessageBox.Show("Could not start local server on port 3000. Please check your project setup.", "Studio Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Could not start local server on port 3000. Please check your project setup.", "Studio Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
 
-                // Locate Edge or Chrome for Application Mode
+                // 2. Check for Electron binary first (Official Electron Engine)
+                string electronExe = Path.Combine(appDir, @"node_modules\electron\dist\electron.exe");
+
+                if (File.Exists(electronExe))
+                {
+                    // Launch via Electron Native Desktop Window
+                    ProcessStartInfo electronPsi = new ProcessStartInfo
+                    {
+                        FileName = electronExe,
+                        Arguments = ".",
+                        WorkingDirectory = appDir,
+                        UseShellExecute = false
+                    };
+
+                    Process electronProc = Process.Start(electronPsi);
+                    if (electronProc != null)
+                    {
+                        electronProc.WaitForExit();
+                        return;
+                    }
+                }
+
+                // Fallback: Launch via Edge/Chromium App Mode
                 string edgePath = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
                 if (!File.Exists(edgePath))
                 {
@@ -74,7 +96,6 @@ namespace StudioApp
                 Process appProcess = Process.Start(appPsi);
                 if (appProcess != null && File.Exists(edgePath))
                 {
-                    // Wait for the desktop application window to exit
                     appProcess.WaitForExit();
                 }
             }
