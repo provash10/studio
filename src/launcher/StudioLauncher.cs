@@ -58,43 +58,62 @@ namespace StudioApp
 
                 if (File.Exists(electronExe))
                 {
-                    // Launch via Electron Native Desktop Window
-                    ProcessStartInfo electronPsi = new ProcessStartInfo
+                    try
                     {
-                        FileName = electronExe,
-                        Arguments = ".",
-                        WorkingDirectory = appDir,
-                        UseShellExecute = false
-                    };
+                        // Launch via Electron Native Desktop Window
+                        ProcessStartInfo electronPsi = new ProcessStartInfo
+                        {
+                            FileName = electronExe,
+                            Arguments = ".",
+                            WorkingDirectory = appDir,
+                            UseShellExecute = false
+                        };
 
-                    Process electronProc = Process.Start(electronPsi);
-                    if (electronProc != null)
+                        Process electronProc = Process.Start(electronPsi);
+                        if (electronProc != null)
+                        {
+                            electronProc.WaitForExit();
+                            return;
+                        }
+                    }
+                    catch
                     {
-                        electronProc.WaitForExit();
-                        return;
+                        // If Electron encountered any platform issue, smoothly continue to Chromium App Mode
                     }
                 }
 
-                // Fallback: Launch via Edge/Chromium App Mode
-                string edgePath = @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe";
-                if (!File.Exists(edgePath))
+                // Fallback: Launch via Chrome or Edge in standalone App Mode
+                string browserPath = null;
+                string[] browserCandidates = new string[]
                 {
-                    edgePath = @"C:\Program Files\Microsoft\Edge\Application\msedge.exe";
+                    @"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                    @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                    @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                    @"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+                };
+
+                foreach (string path in browserCandidates)
+                {
+                    if (File.Exists(path))
+                    {
+                        browserPath = path;
+                        break;
+                    }
                 }
 
                 string userDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "StudioAppProfile");
 
                 ProcessStartInfo appPsi = new ProcessStartInfo
                 {
-                    FileName = File.Exists(edgePath) ? edgePath : "explorer.exe",
-                    Arguments = File.Exists(edgePath)
+                    FileName = (browserPath != null) ? browserPath : "explorer.exe",
+                    Arguments = (browserPath != null)
                         ? string.Format("--app=http://localhost:3000 --window-size=1440,900 --user-data-dir=\"{0}\"", userDataDir)
                         : "http://localhost:3000",
                     UseShellExecute = true
                 };
 
                 Process appProcess = Process.Start(appPsi);
-                if (appProcess != null && File.Exists(edgePath))
+                if (appProcess != null && browserPath != null)
                 {
                     appProcess.WaitForExit();
                 }
