@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
 	Folder,
 	Music,
@@ -100,6 +100,15 @@ export default function CapCutMediaLibrary({
 }) {
 	const [activeSubTab, setActiveSubTab] = useState("media"); // 'media' or 'checklist'
 	const [playingAudioPreview, setPlayingAudioPreview] = useState(null);
+
+	// Automatically sync tab with editMode
+	useEffect(() => {
+		if (editMode === "auto") {
+			setActiveSubTab("media");
+		} else if (editMode === "manual") {
+			setActiveSubTab("checklist");
+		}
+	}, [editMode]);
 
 	const topTools = [
 		{ id: "media", label: "Media", icon: Folder },
