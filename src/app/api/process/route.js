@@ -15,7 +15,7 @@ export async function POST(request) {
 			// Anti-copyright visual techniques
 			mirror = true,
 			blackBgLayer = true, // The Arman Raj red-mark technique: solid black layer underneath + 94% centered overlay
-			applyZoom = false, // 2% safe zoom with headroom protection (default off as per docs)
+			applyZoom = true, // 2% safe zoom with headroom protection enabled by default
 			applyWavyMotion = false, // 3% soft motion
 			colorFilter = "cinematic",
 			brightness = 0.03,

@@ -32,7 +32,7 @@ export default function CapCutStudio() {
 
 	// Right Editing Checklist States
 	const [mirror, setMirror] = useState(true);
-	const [applyZoom, setApplyZoom] = useState(false);
+	const [applyZoom, setApplyZoom] = useState(true); // Safe 2% zoom with top-anchor headroom protection enabled by default
 	const [colorFilter, setColorFilter] = useState("cinematic");
 	const [brightness, setBrightness] = useState(0.03);
 	const [contrast, setContrast] = useState(1.05);
