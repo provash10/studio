@@ -56,6 +56,10 @@ export default function CapCutMediaLibrary({
 	// Active Top Tab
 	activeTopTab = "media",
 	setActiveTopTab,
+	// Video Creation Props
+	onCreateVideo,
+	isCreatingVideo = false,
+	processedVideoUrl = null,
 	// Audio Props
 	bgmEnabled,
 	setBgmEnabled,
@@ -322,6 +326,31 @@ export default function CapCutMediaLibrary({
 												2.mp4
 											</div>
 										</div>
+									</div>
+
+									{/* Action Button: Create Copyright-Free Video */}
+									<div className="pt-2 border-t border-[#212328] flex flex-col gap-1 shrink-0">
+										<button
+											type="button"
+											onClick={onCreateVideo}
+											disabled={isCreatingVideo || !uploadedVideo}
+											className={`w-full py-2 rounded-md font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer ${
+												isCreatingVideo
+													? "bg-[#25262c] text-slate-400 cursor-not-allowed border border-[#30323a]"
+													: processedVideoUrl
+													? "bg-[#0c1417] text-[#00e5ff] border border-[#00e5ff]/70 hover:bg-[#121c21]"
+													: "bg-[#00e5ff] text-black hover:bg-[#00cbe2]"
+											}`}
+										>
+											<Sparkles className="w-3.5 h-3.5" />
+											<span>
+												{isCreatingVideo
+													? "Creating Video..."
+													: processedVideoUrl
+													? "Re-Create Video"
+													: "⚡ Create Copyright-Free Video"}
+											</span>
+										</button>
 									</div>
 								</div>
 							</div>

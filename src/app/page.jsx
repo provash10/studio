@@ -58,6 +58,10 @@ export default function CapCutStudio() {
 
 	// Export / Process State
 	const [isExporting, setIsExporting] = useState(false);
+	const [isCreatingVideo, setIsCreatingVideo] = useState(false);
+	const [processedVideoUrl, setProcessedVideoUrl] = useState(null);
+	const [processedFilename, setProcessedFilename] = useState(null);
+	const [previewMode, setPreviewMode] = useState("raw"); // 'raw' or 'copyright_free'
 	const [exportResult, setExportResult] = useState(null);
 	const [errorMessage, setErrorMessage] = useState("");
 
@@ -67,6 +71,9 @@ export default function CapCutStudio() {
 		setIsUploading(true);
 		setErrorMessage("");
 		setExportResult(null);
+		setProcessedVideoUrl(null);
+		setProcessedFilename(null);
+		setPreviewMode("raw");
 
 		const formData = new FormData();
 		formData.append("file", file);
@@ -101,21 +108,23 @@ export default function CapCutStudio() {
 		setVideoTitle("Rustic wooden... (Sample)");
 		setDuration(36.22);
 		setExportResult(null);
+		setProcessedVideoUrl(null);
+		setProcessedFilename(null);
+		setPreviewMode("raw");
 	};
 
-	// Execute CapCut Export to Documents/Studio/1. Title.mp4
-	const handleExport = async () => {
+	// 1. Create Anti-Copyright Video via FFmpeg
+	const handleCreateVideo = async () => {
 		if (!videoFilename) {
-			alert("Please import a video first!");
+			alert("Please import or select a video first!");
 			return;
 		}
 
-		setIsExporting(true);
+		setIsCreatingVideo(true);
 		setErrorMessage("");
-		setExportResult(null);
 
 		try {
-			console.log("export request initiated");
+			console.log("create video request initiated with anti-copyright filters");
 			const res = await fetch("/api/process", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -153,11 +162,61 @@ export default function CapCutStudio() {
 
 			const data = await res.json();
 			if (data.success) {
-				console.log("export finished and saved successfully");
+				console.log("video created successfully and ready for preview");
+				setProcessedVideoUrl(data.url);
+				setProcessedFilename(data.filename);
+				setPreviewMode("copyright_free");
 				setExportResult(data);
+				return data;
 			} else {
-				console.log("export request returned an error");
-				setErrorMessage(data.error || "Upload failed");
+				console.log("video creation returned an error");
+				setErrorMessage(data.error || "Processing failed");
+				return null;
+			}
+		} catch (err) {
+			setErrorMessage(err.message);
+			return null;
+		} finally {
+			setIsCreatingVideo(false);
+		}
+	};
+
+	// 2. Execute CapCut Export & Browser Download to Local Documents/Studio
+	const handleExport = async () => {
+		if (!videoFilename) {
+			alert("Please import a video first!");
+			return;
+		}
+
+		setIsExporting(true);
+		setErrorMessage("");
+
+		try {
+			let currentResult = exportResult;
+			let downloadUrl = processedVideoUrl;
+			let downloadName = processedFilename;
+
+			// If video was not created yet, create it now
+			if (!downloadUrl) {
+				currentResult = await handleCreateVideo();
+				if (currentResult && currentResult.success) {
+					downloadUrl = currentResult.url;
+					downloadName = currentResult.filename;
+				}
+			}
+
+			if (downloadUrl) {
+				// Trigger automatic browser download
+				const link = document.createElement("a");
+				link.href = downloadUrl;
+				link.download = downloadName || "Studio_Video.mp4";
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+
+				if (currentResult) {
+					setExportResult(currentResult);
+				}
 			}
 		} catch (err) {
 			setErrorMessage(err.message);
@@ -202,6 +261,9 @@ export default function CapCutStudio() {
 						activeTopTab={activeTopTab}
 						setActiveTopTab={setActiveTopTab}
 						// Audio tools
+						onCreateVideo={handleCreateVideo}
+						isCreatingVideo={isCreatingVideo}
+						processedVideoUrl={processedVideoUrl}
 						bgmEnabled={bgmEnabled}
 						setBgmEnabled={setBgmEnabled}
 						bgmTrackName={bgmTrackName}
@@ -262,6 +324,13 @@ export default function CapCutStudio() {
 						onTimeUpdate={(t) => setCurrentTime(t)}
 						onDurationChange={(d) => setDuration(d)}
 						seekTime={seekTime}
+						// Video Creation & Preview Controls
+						onCreateVideo={handleCreateVideo}
+						isCreatingVideo={isCreatingVideo}
+						processedVideoUrl={processedVideoUrl}
+						previewMode={previewMode}
+						setPreviewMode={setPreviewMode}
+						onExport={handleExport}
 					/>
 				</div>
 
