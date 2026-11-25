@@ -305,39 +305,58 @@ export default function CapCutMediaLibrary({
 									</div>
 
 									<div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pr-1 pt-2 content-start">
-										<div className="relative rounded-md overflow-hidden bg-[#1c1d22] border border-[#2f323c] aspect-[4/3] flex flex-col justify-between p-1.5 group cursor-pointer hover:border-[#00e5ff]/80 transition-colors">
-											<div className="flex items-center justify-between z-10">
-												<span className="bg-[#00e5ff] text-black text-[9px] font-bold px-1.5 py-0.2 rounded">
-													Added
-												</span>
-												<span className="text-[9px] text-slate-300 font-mono bg-black/70 px-1 rounded">
-													00:{Math.floor(duration || 36).toString().padStart(2, "0")}
-												</span>
+										{uploadedVideo ? (
+											<div className="relative rounded-md overflow-hidden bg-[#1c1d22] border border-[#00e5ff]/60 aspect-[4/3] flex flex-col justify-between p-1.5 group cursor-pointer shadow-md">
+												<div className="flex items-center justify-between z-10">
+													<span className="bg-[#00e5ff] text-black text-[9px] font-bold px-1.5 py-0.2 rounded">
+														Added
+													</span>
+													<span className="text-[9px] text-slate-300 font-mono bg-black/70 px-1 rounded">
+														00:{Math.floor(duration || 36).toString().padStart(2, "0")}
+													</span>
+												</div>
+												<div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#1a2930] to-[#12161a]">
+													<Film className="w-8 h-8 text-[#00e5ff]" />
+												</div>
+												<div className="z-10 bg-black/85 px-1.5 py-0.5 rounded text-[9.5px] text-slate-200 truncate font-mono">
+													{videoTitle || "Uploaded Video"}
+												</div>
 											</div>
-											<div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#2a241d] to-[#141518]">
-												<Film className="w-7 h-7 text-amber-500/90" />
-											</div>
-											<div className="z-10 bg-black/80 px-1 py-0.5 rounded text-[9.5px] text-slate-200 truncate font-mono">
-												{videoTitle || "Rustic wo...e.mp4"}
-											</div>
-										</div>
+										) : (
+											<label className="col-span-2 cursor-pointer border-2 border-dashed border-[#2f323c] hover:border-[#00e5ff]/50 rounded-lg p-5 flex flex-col items-center justify-center gap-2 text-center bg-[#17181c] transition-colors">
+												<Film className="w-8 h-8 text-slate-500" />
+												<span className="text-slate-300 font-bold text-xs">ভিডিও আপলোড করতে এখানে ক্লিক করুন</span>
+												<span className="text-[10px] text-slate-500">MP4, MOV, WebM ফাইল সাপোর্ট করে</span>
+												<input
+													type="file"
+													accept="video/*"
+													onChange={(e) => {
+														const f = e.target.files?.[0];
+														if (f && onFileUpload) onFileUpload(f);
+													}}
+													className="hidden"
+												/>
+											</label>
+										)}
 
-										<div className="relative rounded-md overflow-hidden bg-[#00dd00] aspect-[4/3] flex flex-col justify-between p-1.5 border border-[#2f323c]">
-											<div className="flex items-center justify-between z-10">
-												<span className="bg-black/80 text-white text-[9px] font-medium px-1.5 py-0.2 rounded">
-													Added
-												</span>
-												<span className="text-[9px] text-black font-mono font-bold bg-white/70 px-1 rounded">
-													00:09
-												</span>
+										{processedVideoUrl && (
+											<div className="relative rounded-md overflow-hidden bg-[#0d1f16] border border-emerald-500/60 aspect-[4/3] flex flex-col justify-between p-1.5 group cursor-pointer shadow-md">
+												<div className="flex items-center justify-between z-10">
+													<span className="bg-emerald-500 text-black text-[9px] font-bold px-1.5 py-0.2 rounded">
+														✓ Rendered
+													</span>
+													<span className="text-[9px] text-emerald-300 font-mono bg-black/70 px-1 rounded">
+														00:{Math.floor(duration || 36).toString().padStart(2, "0")}
+													</span>
+												</div>
+												<div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#102a1e] to-[#0d1612]">
+													<Sparkles className="w-8 h-8 text-emerald-400" />
+												</div>
+												<div className="z-10 bg-black/85 px-1.5 py-0.5 rounded text-[9.5px] text-emerald-300 truncate font-mono">
+													Copyright-Free Output
+												</div>
 											</div>
-											<div className="absolute inset-0 flex items-center justify-center">
-												<span className="text-xl">🧸</span>
-											</div>
-											<div className="z-10 bg-black/80 px-1 py-0.5 rounded text-[9.5px] text-slate-200">
-												2.mp4
-											</div>
-										</div>
+										)}
 									</div>
 
 									{/* Action Button: Create Copyright-Free Video */}

@@ -226,13 +226,14 @@ export default function CapCutPlayer({
 					)}
 
 					{activeVideoSrc ? (
-						<video
-							ref={videoRef}
-							key={activeVideoSrc} // force reload when switching source
-							src={activeVideoSrc}
-							muted={isCopyrightFreeActive ? false : muteOriginalAudio}
-							controls={false}
-							className="relative z-10 w-full h-full object-contain"
+						<>
+							<video
+								ref={videoRef}
+								key={activeVideoSrc} // force reload when switching source
+								src={activeVideoSrc}
+								muted={isCopyrightFreeActive ? false : muteOriginalAudio}
+								controls={false}
+								className="relative z-10 w-full h-full object-contain"
 							style={
 								isCopyrightFreeActive
 									? {} // Video is already rendered with all filters burned-in by FFmpeg
@@ -257,6 +258,19 @@ export default function CapCutPlayer({
 							onEnded={() => setIsPlaying(false)}
 							playsInline
 						/>
+
+						{/* Big Center Play Arrow Overlay when Paused */}
+						{!isPlaying && (
+							<div
+								onClick={togglePlay}
+								className="absolute inset-0 z-20 flex items-center justify-center bg-black/20 hover:bg-black/35 transition-all cursor-pointer group"
+							>
+								<div className="w-14 h-14 rounded-full bg-[#00e5ff] group-hover:scale-110 group-hover:bg-[#33ebff] transition-all flex items-center justify-center shadow-2xl shadow-cyan-950/80">
+									<Play className="w-7 h-7 text-black fill-black ml-1" />
+								</div>
+							</div>
+						)}
+					</>
 					) : (
 						<div className="flex flex-col items-center justify-center text-slate-500 gap-2 p-6 text-center">
 							<Film className="w-8 h-8 text-slate-600" />
@@ -313,8 +327,35 @@ export default function CapCutPlayer({
 				</div>
 			</div>
 
+			{/* Scrubber Progress Bar with Playhead Arrow */}
+			<div
+				onClick={(e) => {
+					if (!videoRef.current || duration <= 0) return;
+					const rect = e.currentTarget.getBoundingClientRect();
+					const clickX = e.clientX - rect.left;
+					const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+					const targetTime = ratio * duration;
+					videoRef.current.currentTime = targetTime;
+					if (onTimeUpdate) onTimeUpdate(targetTime);
+				}}
+				className="h-2 bg-[#202228] relative cursor-pointer group hover:h-2.5 transition-all"
+			>
+				{/* Progress fill */}
+				<div
+					className="h-full bg-gradient-to-r from-[#00b4d8] to-[#00e5ff] relative transition-all"
+					style={{
+						width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%`,
+					}}
+				>
+					{/* Playhead Arrow Handle */}
+					<div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 flex flex-col items-center pointer-events-none">
+						<span className="text-[#00e5ff] text-[10px] leading-none select-none">▼</span>
+					</div>
+				</div>
+			</div>
+
 			{/* Bottom Player Toolbar: Timecodes, Play Button, Aspect Ratio */}
-			<div className="h-8 bg-[#18191c] border-t border-[#212328] px-3 flex items-center justify-between text-slate-400 shrink-0">
+			<div className="h-9 bg-[#18191c] border-t border-[#212328] px-3 flex items-center justify-between text-slate-400 shrink-0">
 				{/* Left Timecode */}
 				<div className="flex items-center gap-1.5 font-mono text-[11px]">
 					<span className="text-[#00e5ff] font-semibold">
@@ -325,18 +366,24 @@ export default function CapCutPlayer({
 					</span>
 				</div>
 
-				{/* Center Play/Pause Controls */}
-				<div className="flex items-center gap-3">
+				{/* Center Play/Pause Controls with Prominent Play Arrow */}
+				<div className="flex items-center gap-2">
 					<button
 						type="button"
 						onClick={togglePlay}
-						className="w-7 h-7 rounded-full bg-white hover:bg-slate-200 text-black flex items-center justify-center transition-transform hover:scale-105 shadow cursor-pointer"
-						title={isPlaying ? "Pause" : "Play"}
+						className="px-3.5 py-1 rounded-full bg-[#00e5ff] hover:bg-[#33ebff] text-black font-extrabold text-[11px] flex items-center gap-1.5 transition-all hover:scale-105 shadow-md shadow-cyan-950/60 cursor-pointer"
+						title={isPlaying ? "Pause Preview" : "Play Preview"}
 					>
 						{isPlaying ? (
-							<Pause className="w-3.5 h-3.5 fill-black" />
+							<>
+								<Pause className="w-3.5 h-3.5 fill-black" />
+								<span>Pause ⏸</span>
+							</>
 						) : (
-							<Play className="w-3.5 h-3.5 fill-black ml-0.5" />
+							<>
+								<Play className="w-3.5 h-3.5 fill-black ml-0.5" />
+								<span>Play ▶</span>
+							</>
 						)}
 					</button>
 				</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useRef } from "react";
 import {
 	Scissors,
 	Trash2,
@@ -18,13 +18,15 @@ import {
 	MousePointer,
 	Crop,
 	Link2,
+	Film,
+	Music,
 } from "lucide-react";
 
 export default function CapCutTimeline({
 	duration = 36.22,
 	currentTime = 0,
 	onSeek,
-	videoTitle = "Rustic wooden...",
+	videoTitle = "Uploaded Video",
 	blackBgLayer = true,
 	mirror = true,
 	setMirror,
@@ -36,60 +38,16 @@ export default function CapCutTimeline({
 }) {
 	const timelineRef = useRef(null);
 
-	// Interactive Timeline Clips State (Main Track V2)
-	const [clips, setClips] = useState([
-		{ id: 1, name: "Rustic wooden", widthPct: 15, isFreeze: false },
-		{ id: 2, name: "Freeze 00:00:05:18", widthPct: 20, isFreeze: true },
-		{ id: 3, name: "Rustic wood", widthPct: 15, isFreeze: false },
-		{ id: 4, name: "Freeze 00:00:05:26", widthPct: 20, isFreeze: true },
-		{ id: 5, name: "Freeze 00:00:05:27", widthPct: 15, isFreeze: true },
-		{ id: 6, name: "Freeze 00:00:06:29", widthPct: 15, isFreeze: true },
-	]);
-	const [selectedClipId, setSelectedClipId] = useState(5); // Default selected clip like in user screenshot
-
-	// Interactive Actions
-	const handleSplit = () => {
-		if (clips.length === 0) return;
-		const targetIndex = clips.findIndex((c) => c.id === selectedClipId);
-		if (targetIndex === -1) return;
-		const current = clips[targetIndex];
-		const halfWidth = Math.max(5, current.widthPct / 2);
-
-		const firstHalf = {
-			...current,
-			id: Date.now(),
-			widthPct: halfWidth,
-			name: `${current.name.split(" ")[0]} Split`,
-		};
-		const secondHalf = {
-			...current,
-			id: Date.now() + 1,
-			widthPct: halfWidth,
-			name: `${current.name.split(" ")[0]} Part 2`,
-		};
-
-		const updated = [...clips];
-		updated.splice(targetIndex, 1, firstHalf, secondHalf);
-		setClips(updated);
-		setSelectedClipId(firstHalf.id);
+	const formatCapCutTimecode = (seconds) => {
+		const safeSec = Math.max(0, Number(seconds) || 0);
+		const m = Math.floor((safeSec % 3600) / 60);
+		const s = Math.floor(safeSec % 60);
+		return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 	};
 
-	const handleDelete = () => {
-		if (clips.length <= 1) return;
-		const updated = clips.filter((c) => c.id !== selectedClipId);
-		setClips(updated);
-		if (updated.length > 0) setSelectedClipId(updated[0].id);
-	};
-
-	const handleFreeze = () => {
-		setClips(
-			clips.map((c) =>
-				c.id === selectedClipId
-					? { ...c, isFreeze: true, name: `Freeze 00:00:${Math.floor(currentTime)}` }
-					: c,
-			),
-		);
-	};
+	const handleSplit = () => {};
+	const handleDelete = () => {};
+	const handleFreeze = () => {};
 
 	const handleTimelineClick = (e) => {
 		if (!timelineRef.current || duration <= 0) return;
@@ -208,28 +166,44 @@ export default function CapCutTimeline({
 			{/* Multi-Track Area */}
 			<div className="flex-1 flex overflow-hidden">
 				{/* Left Track Control Rail */}
-				<div className="w-20 bg-[#121316] border-r border-[#212328] flex flex-col justify-between py-1 text-slate-500 text-[10px] shrink-0">
+				<div className="w-20 bg-[#121316] border-r border-[#212328] flex flex-col justify-between py-1 text-slate-500 text-[10px] shrink-0 font-mono">
 					{/* Ruler space */}
 					<div className="h-6" />
 
-					{/* Track 3 Control */}
-					<div className="h-10 px-2 flex items-center justify-end gap-1.5 border-t border-[#1a1b20]">
-						<Lock className="w-3 h-3 hover:text-white cursor-pointer" />
-						<Eye className="w-3 h-3 hover:text-white cursor-pointer" />
+					{/* Track V1 Control (Video) */}
+					<div className="h-10 px-2 flex items-center justify-between border-t border-[#1a1b20]">
+						<span className="text-[#00e5ff] font-bold text-[9px]">V1</span>
+						<div className="flex items-center gap-1">
+							<Lock className="w-3 h-3 text-slate-500 hover:text-white cursor-pointer" />
+							<Eye className="w-3 h-3 text-[#00e5ff] cursor-pointer" />
+						</div>
 					</div>
 
-					{/* Track 2 Control */}
-					<div className="h-11 px-2 flex items-center justify-end gap-1.5 border-t border-[#1a1b20]">
-						<Lock className="w-3 h-3 hover:text-white cursor-pointer" />
-						<Eye className="w-3 h-3 hover:text-white cursor-pointer" />
-						<VolumeX className="w-3 h-3 text-rose-400" title="Audio Muted" />
+					{/* Track A1 Control (Voiceover) */}
+					<div className="h-9 px-2 flex items-center justify-between border-t border-[#1a1b20]">
+						<span className="text-emerald-400 font-bold text-[9px]">A1</span>
+						<div className="flex items-center gap-1">
+							<Lock className="w-3 h-3 text-slate-500 hover:text-white cursor-pointer" />
+							<Mic className="w-3 h-3 text-emerald-400 cursor-pointer" />
+						</div>
 					</div>
 
-					{/* Track 1 Control (The black.jpg Layer) */}
-					<div className="h-9 px-2 flex items-center justify-end gap-1.5 border-t border-[#1a1b20] bg-[#0c0d10]">
-						<Lock className="w-3 h-3 text-[#00e5ff]" />
-						<Eye className="w-3 h-3 text-[#00e5ff]" />
-						<PenTool className="w-3 h-3 text-slate-400" />
+					{/* Track A2 Control (BGM) */}
+					<div className="h-9 px-2 flex items-center justify-between border-t border-[#1a1b20]">
+						<span className="text-indigo-400 font-bold text-[9px]">A2</span>
+						<div className="flex items-center gap-1">
+							<Lock className="w-3 h-3 text-slate-500 hover:text-white cursor-pointer" />
+							<Music className="w-3 h-3 text-indigo-400 cursor-pointer" />
+						</div>
+					</div>
+
+					{/* Track Base Control (black.jpg) */}
+					<div className="h-8 px-2 flex items-center justify-between border-t border-[#1a1b20] bg-[#0c0d10]">
+						<span className="text-cyan-400 font-bold text-[9px]">B1</span>
+						<div className="flex items-center gap-1">
+							<Lock className="w-3 h-3 text-[#00e5ff]" />
+							<Square className="w-2.5 h-2.5 fill-[#00e5ff] text-[#00e5ff]" />
+						</div>
 					</div>
 				</div>
 
@@ -258,75 +232,88 @@ export default function CapCutTimeline({
 						</div>
 					</div>
 
-					{/* Track 3: Green clips (Exact replica of user screenshot: 3.mp4, 2.mp4, 7.mp4, 5.mp4) */}
-					<div className="h-10 relative flex items-center border-b border-[#1c1d22] px-1 bg-[#141518]">
-						<div className="absolute left-[12%] w-[18%] h-7 bg-[#0f7a2d] border border-[#169a3b] rounded flex items-center px-1.5 text-[9px] text-white font-mono shadow truncate">
-							3.mp4 00:00:05:18
-						</div>
-						<div className="absolute left-[34%] w-[19%] h-7 bg-[#0f7a2d] border border-[#169a3b] rounded flex items-center px-1.5 text-[9px] text-white font-mono shadow truncate">
-							2.mp4 00:00:05:26
-						</div>
-						<div className="absolute left-[58%] w-[19%] h-7 bg-[#0f7a2d] border border-[#169a3b] rounded flex items-center px-1.5 text-[9px] text-white font-mono shadow truncate">
-							7.mp4 00:00:05:25
-						</div>
-						<div className="absolute left-[80%] w-[18%] h-7 bg-[#0f7a2d] border border-[#169a3b] rounded flex items-center px-1.5 text-[9px] text-white font-mono shadow truncate">
-							5.mp4 00:00:06:29
+					{/* Track 1: Real Uploaded Video Track */}
+					<div className="h-10 relative flex items-center border-b border-[#1c1d22] px-1 bg-[#131417]">
+						<div className="w-full h-8 bg-gradient-to-r from-[#1c333e] to-[#244352] border border-[#00e5ff]/60 rounded flex items-center px-2.5 justify-between text-[10px] text-white font-mono shadow">
+							<span className="font-bold flex items-center gap-1.5 truncate">
+								<Film className="w-3.5 h-3.5 text-[#00e5ff] shrink-0" />
+								<span className="text-cyan-200 truncate">{videoTitle || "Uploaded Video"}</span>
+							</span>
+							<span className="text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-cyan-300 font-bold shrink-0">
+								00:00 - {formatCapCutTimecode(duration)}
+							</span>
 						</div>
 					</div>
 
-					{/* Track 2: Main Video Track with thumbnail filmstrip and clickable Freeze blocks */}
-					<div className="h-11 relative flex items-center border-b border-[#1c1d22] px-1 bg-[#131417]">
-						<div className="flex w-full h-8 rounded overflow-hidden">
-							{clips.map((clip) => {
-								const isSelected = clip.id === selectedClipId;
-								return (
-									<div
-										key={clip.id}
-										onClick={(e) => {
-											e.stopPropagation();
-											setSelectedClipId(clip.id);
-										}}
-										style={{ width: `${clip.widthPct}%` }}
-										className={`h-full border-r border-black/40 flex items-center px-1 text-[9px] truncate cursor-pointer transition-all ${
-											isSelected
-												? "bg-[#486e7a] border-2 border-white rounded shadow-md text-white font-bold z-10"
-												: clip.isFreeze
-													? "bg-[#3a5863] text-cyan-200"
-													: "bg-[#2e4752] text-slate-200"
-										}`}
-									>
-										{clip.name}
-									</div>
-								);
-							})}
-						</div>
-					</div>
-
-					{/* Track 1: The RED MARKED CapCut Layer: black.jpg */}
-					<div className="h-9 relative flex items-center border-b border-[#1c1d22] px-1 bg-[#090a0d]">
-						{blackBgLayer ? (
-							<div className="w-full h-7 bg-black border-y-2 border-[#009b9e] rounded flex items-center px-2 text-[10px] text-[#00e5ff] font-mono shadow justify-between">
-								<span className="font-bold flex items-center gap-1.5">
-									<Square className="w-2.5 h-2.5 fill-black border border-[#00e5ff]" />
-									black.jpg 00:00:36:22
+					{/* Track 2: AI Voiceover (ElevenLabs) Track */}
+					<div className="h-9 relative flex items-center border-b border-[#1c1d22] px-1 bg-[#10141a]">
+						{voiceoverFileName ? (
+							<div className="w-full h-7 bg-gradient-to-r from-[#0d2a1f] to-[#123829] border border-emerald-500/60 rounded flex items-center px-2 text-[10px] text-emerald-300 font-mono shadow justify-between">
+								<span className="font-bold flex items-center gap-1.5 truncate">
+									<Mic className="w-3 h-3 text-emerald-400 shrink-0" />
+									<span className="truncate">ElevenLabs Voiceover: {voiceoverFileName}</span>
 								</span>
-								<span className="text-[9px] text-[#00e5ff]/80 font-semibold uppercase">
-									✓ Active Solid Black Base Layer
+								<span className="text-[9px] bg-emerald-950/80 px-1.5 py-0.5 rounded text-emerald-300 font-bold shrink-0">
+									Active
 								</span>
 							</div>
 						) : (
-							<div className="w-full h-6 bg-slate-900 border border-slate-800 text-[10px] text-slate-600 px-2 flex items-center">
+							<div className="w-full h-7 bg-[#161a22] border border-[#252a36] rounded flex items-center px-2 text-[9.5px] text-slate-400 font-mono justify-between">
+								<span className="flex items-center gap-1.5">
+									<Mic className="w-3 h-3 text-slate-500 shrink-0" />
+									<span>ElevenLabs Voiceover (Auto-generated on Create Video)</span>
+								</span>
+								<span className="text-[9px] text-slate-500">Auto</span>
+							</div>
+						)}
+					</div>
+
+					{/* Track 3: Looped BGM Music Track */}
+					<div className="h-9 relative flex items-center border-b border-[#1c1d22] px-1 bg-[#10131a]">
+						{bgmEnabled ? (
+							<div className="w-full h-7 bg-gradient-to-r from-[#151c33] to-[#1a2542] border border-indigo-500/50 rounded flex items-center px-2 text-[10px] text-indigo-200 font-mono shadow justify-between">
+								<span className="font-bold flex items-center gap-1.5 truncate">
+									<Music className="w-3 h-3 text-indigo-400 shrink-0" />
+									<span className="truncate">Looped BGM Mix: {bgmTrackName || "bg3.mp4"}</span>
+								</span>
+								<span className="text-[9px] bg-indigo-950/80 px-1.5 py-0.5 rounded text-indigo-300 font-bold shrink-0">
+									Looped
+								</span>
+							</div>
+						) : (
+							<div className="w-full h-7 bg-[#15171e] border border-[#232630] rounded flex items-center px-2 text-[9.5px] text-slate-500 font-mono">
+								No background music
+							</div>
+						)}
+					</div>
+
+					{/* Track 4: Solid Black Base Canvas [black.jpg] */}
+					<div className="h-8 relative flex items-center border-b border-[#1c1d22] px-1 bg-[#090a0d]">
+						{blackBgLayer ? (
+							<div className="w-full h-6 bg-black border-y border-[#009b9e]/70 rounded flex items-center px-2 text-[9.5px] text-[#00e5ff] font-mono shadow justify-between">
+								<span className="font-bold flex items-center gap-1.5">
+									<Square className="w-2.5 h-2.5 fill-black border border-[#00e5ff]" />
+									<span>black.jpg Base Canvas Layer</span>
+								</span>
+								<span className="text-[8.5px] text-[#00e5ff]/80 font-bold uppercase">
+									✓ Active Framing Layer
+								</span>
+							</div>
+						) : (
+							<div className="w-full h-6 bg-slate-900 border border-slate-800 text-[9px] text-slate-600 px-2 flex items-center">
 								No background layer
 							</div>
 						)}
 					</div>
 
-					{/* Playhead Marker Needle (White needle with top rounded flag) */}
+					{/* Playhead Marker Needle with Arrow Head */}
 					<div
-						className="absolute top-0 bottom-0 w-[1.5px] bg-white z-30 pointer-events-none transition-all duration-75"
+						className="absolute top-0 bottom-0 w-[2px] bg-[#00e5ff] z-30 pointer-events-none transition-all duration-75 shadow-sm shadow-cyan-400"
 						style={{ left: `${Math.max(0, Math.min(100, progressPercent))}%` }}
 					>
-						<div className="w-3 h-3.5 -ml-[5.5px] bg-white rounded-t-sm shadow-md" />
+						<div className="w-3 h-3 -ml-[5px] -mt-1 text-[#00e5ff] text-[11px] font-extrabold flex items-center justify-center leading-none">
+							▼
+						</div>
 					</div>
 				</div>
 			</div>
