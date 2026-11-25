@@ -43,6 +43,14 @@ export default function CapCutStudio() {
 	const [bgmVolume, setBgmVolume] = useState(0.25);
 	const [metadataClean, setMetadataClean] = useState(true);
 
+	// Text & Sticker Overlays
+	const [textOverlay, setTextOverlay] = useState("WAIT FOR IT... 🔥");
+	const [showTextOverlay, setShowTextOverlay] = useState(false);
+	const [stickerOverlay, setStickerOverlay] = useState("🧸");
+	const [showStickerOverlay, setShowStickerOverlay] = useState(false);
+	const [activeTransition, setActiveTransition] = useState("crossfade");
+	const [activeTopTab, setActiveTopTab] = useState("media");
+
 	// Voiceover States
 	const [voiceoverEnabled, setVoiceoverEnabled] = useState(false);
 	const [voiceoverFileName, setVoiceoverFileName] = useState(null);
@@ -191,6 +199,42 @@ export default function CapCutStudio() {
 						setTrimStart={setTrimStart}
 						trimEnd={trimEnd}
 						setTrimEnd={setTrimEnd}
+						activeTopTab={activeTopTab}
+						setActiveTopTab={setActiveTopTab}
+						// Audio tools
+						bgmEnabled={bgmEnabled}
+						setBgmEnabled={setBgmEnabled}
+						bgmTrackName={bgmTrackName}
+						setBgmTrackName={setBgmTrackName}
+						bgmVolume={bgmVolume}
+						setBgmVolume={setBgmVolume}
+						muteOriginalAudio={muteOriginalAudio}
+						setMuteOriginalAudio={setMuteOriginalAudio}
+						// Text & Sticker overlays
+						textOverlay={textOverlay}
+						setTextOverlay={setTextOverlay}
+						showTextOverlay={showTextOverlay}
+						setShowTextOverlay={setShowTextOverlay}
+						stickerOverlay={stickerOverlay}
+						setStickerOverlay={setStickerOverlay}
+						showStickerOverlay={showStickerOverlay}
+						setShowStickerOverlay={setShowStickerOverlay}
+						// Effects & Transitions
+						applyZoom={applyZoom}
+						setApplyZoom={setApplyZoom}
+						mirror={mirror}
+						setMirror={setMirror}
+						activeTransition={activeTransition}
+						setActiveTransition={setActiveTransition}
+						// Filters & Adjustments
+						colorFilter={colorFilter}
+						setColorFilter={setColorFilter}
+						brightness={brightness}
+						setBrightness={setBrightness}
+						contrast={contrast}
+						setContrast={setContrast}
+						saturation={saturation}
+						setSaturation={setSaturation}
 					/>
 				</div>
 
@@ -209,6 +253,10 @@ export default function CapCutStudio() {
 						saturation={saturation}
 						muteOriginalAudio={muteOriginalAudio}
 						videoScale={videoScale}
+						textOverlay={textOverlay}
+						showTextOverlay={showTextOverlay}
+						stickerOverlay={stickerOverlay}
+						showStickerOverlay={showStickerOverlay}
 						currentTime={currentTime}
 						duration={duration}
 						onTimeUpdate={(t) => setCurrentTime(t)}

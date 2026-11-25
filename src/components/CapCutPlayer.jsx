@@ -26,6 +26,10 @@ export default function CapCutPlayer({
 	saturation = 1.08,
 	muteOriginalAudio = true,
 	videoScale = 94,
+	textOverlay = "",
+	showTextOverlay = false,
+	stickerOverlay = "",
+	showStickerOverlay = false,
 	currentTime = 0,
 	duration = 36.22,
 	onTimeUpdate,
@@ -153,6 +157,20 @@ export default function CapCutPlayer({
 							<p className="text-[11px] text-slate-400">
 								Import a video from media panel to preview
 							</p>
+						</div>
+					)}
+
+					{/* Text Overlay (Hook / Captions) */}
+					{showTextOverlay && textOverlay && (
+						<div className="absolute top-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none px-3 py-1 bg-black/80 rounded border-2 border-yellow-400 text-yellow-300 font-extrabold text-xs sm:text-sm tracking-wide text-center uppercase shadow-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] max-w-[90%]">
+							{textOverlay}
+						</div>
+					)}
+
+					{/* Sticker Overlay (Reaction Meme) */}
+					{showStickerOverlay && stickerOverlay && (
+						<div className="absolute bottom-12 right-4 z-20 pointer-events-none text-2xl sm:text-3xl filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] animate-bounce">
+							{stickerOverlay}
 						</div>
 					)}
 

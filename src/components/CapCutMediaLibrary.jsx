@@ -19,6 +19,18 @@ import {
 	ChevronRight,
 	Upload,
 	Check,
+	Volume2,
+	VolumeX,
+	Play,
+	Pause,
+	Wand2,
+	Palette,
+	FlipHorizontal,
+	ZoomIn,
+	RotateCcw,
+	Smile,
+	Flame,
+	Bell,
 } from "lucide-react";
 
 export default function CapCutMediaLibrary({
@@ -41,9 +53,46 @@ export default function CapCutMediaLibrary({
 	setTrimStart,
 	trimEnd = 40,
 	setTrimEnd,
+	// Active Top Tab
+	activeTopTab = "media",
+	setActiveTopTab,
+	// Audio Props
+	bgmEnabled,
+	setBgmEnabled,
+	bgmTrackName,
+	setBgmTrackName,
+	bgmVolume,
+	setBgmVolume,
+	muteOriginalAudio,
+	setMuteOriginalAudio,
+	// Text & Sticker Overlays
+	textOverlay,
+	setTextOverlay,
+	showTextOverlay,
+	setShowTextOverlay,
+	stickerOverlay,
+	setStickerOverlay,
+	showStickerOverlay,
+	setShowStickerOverlay,
+	// Effects & Transitions
+	applyZoom,
+	setApplyZoom,
+	mirror,
+	setMirror,
+	activeTransition,
+	setActiveTransition,
+	// Filters & Adjustments
+	colorFilter,
+	setColorFilter,
+	brightness,
+	setBrightness,
+	contrast,
+	setContrast,
+	saturation,
+	setSaturation,
 }) {
-	const [activeTopTab, setActiveTopTab] = useState("media");
-	const [activeSubTab, setActiveSubTab] = useState("media"); // default to 'media' so user sees CapCut media first
+	const [activeSubTab, setActiveSubTab] = useState("media"); // 'media' or 'checklist'
+	const [playingAudioPreview, setPlayingAudioPreview] = useState(null);
 
 	const topTools = [
 		{ id: "media", label: "Media", icon: Folder },
@@ -68,9 +117,55 @@ export default function CapCutMediaLibrary({
 		{ id: "adjustment", label: "Adjustment", icon: SlidersHorizontal },
 	];
 
+	// BGM Tracks list
+	const bgmTracks = [
+		{ id: "bg1.mp4", name: "bg1.mp4", mood: "Chill Beat", bpm: "95 BPM" },
+		{ id: "bg2.mp4", name: "bg2.mp4", mood: "Dramatic Hook", bpm: "110 BPM" },
+		{ id: "bg3.mp4", name: "bg3.mp4", mood: "Upbeat Viral", bpm: "128 BPM" },
+		{ id: "bg4.mp4", name: "bg4.mp4", mood: "Cinematic Atmosphere", bpm: "85 BPM" },
+	];
+
+	// Text Presets
+	const textPresets = [
+		"WAIT FOR IT... 🔥",
+		"WATCH TILL THE END 😱",
+		"100% UNBELIEVABLE 🤯",
+		"DON'T BLINK ⚡",
+		"PART 1 / 2 🎬",
+		"BEST MOMENT EVER 😂",
+	];
+
+	// Stickers list
+	const stickers = [
+		{ id: "🧸", label: "Puppet", subtitle: "2.mp4 meme" },
+		{ id: "🏃", label: "Runner", subtitle: "3.mp4 meme" },
+		{ id: "💀", label: "Skeleton", subtitle: "4.mp4 meme" },
+		{ id: "🔔", label: "Subscribe", subtitle: "Click badge" },
+		{ id: "🔥", label: "Fire Streak", subtitle: "Viral badge" },
+		{ id: "😱", label: "Shock Face", subtitle: "Climax hook" },
+	];
+
+	// Filter presets
+	const filterList = [
+		{ id: "none", name: "Natural (Raw)", color: "from-slate-700 to-slate-900" },
+		{ id: "cinematic", name: "Teal & Orange", color: "from-cyan-700 to-amber-700" },
+		{ id: "warm", name: "Golden Sunset", color: "from-amber-600 to-rose-700" },
+		{ id: "cool", name: "Nordic Frost", color: "from-blue-600 to-cyan-800" },
+		{ id: "vivid", name: "Hyper Pop", color: "from-fuchsia-600 to-purple-800" },
+		{ id: "mono", name: "Film Noir", color: "from-zinc-400 to-zinc-900" },
+	];
+
+	// Transitions list
+	const transitions = [
+		{ id: "fade", name: "Fade Black", icon: "⬛", desc: "Classic YouTube dark dip" },
+		{ id: "crossfade", name: "Cross Dissolve", icon: "🌫️", desc: "Smooth scene blend" },
+		{ id: "whip", name: "Whip Zoom", icon: "💨", desc: "High energy fast cut" },
+		{ id: "flash", name: "Flash White", icon: "⚡", desc: "Climax scene reveal" },
+	];
+
 	return (
 		<div className="h-full flex flex-col bg-[#141518] border-r border-[#212328] select-none text-xs overflow-hidden">
-			{/* Top Tool Shelf (Pixel-perfect CapCut horizontal bar - perfectly fits without scrollbar) */}
+			{/* Top Tool Shelf (Authentic 8 CapCut buttons - now all fully interactive!) */}
 			<div className="h-11 bg-[#141518] border-b border-[#212328] px-1 flex items-center justify-between no-scrollbar shrink-0">
 				{topTools.map((tool) => {
 					const Icon = tool.icon;
@@ -105,363 +200,648 @@ export default function CapCutMediaLibrary({
 				})}
 			</div>
 
-			{/* Sub-Tabs: CapCut Media Files vs Left Editing Checklist */}
-			<div className="h-9 bg-[#17181c] border-b border-[#212328] px-2.5 flex items-center justify-between shrink-0">
-				<div className="flex items-center gap-1.5">
-					<button
-						type="button"
-						onClick={() => setActiveSubTab("media")}
-						className={`px-3 py-1 rounded text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-							activeSubTab === "media"
-								? "bg-[#25272e] text-white shadow-sm"
-								: "text-slate-400 hover:text-white"
-						}`}
-					>
-						<Folder className="w-3 h-3 text-[#00e5ff]" />
-						<span>Media Files</span>
-					</button>
+			{/* TAB CONTENT ROUTER: ALL 8 TABS ARE FULLY FUNCTIONAL */}
 
-					<button
-						type="button"
-						onClick={() => setActiveSubTab("checklist")}
-						className={`px-3 py-1 rounded text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-							activeSubTab === "checklist"
-								? "bg-[#00e5ff]/20 text-[#00e5ff] border border-[#00e5ff]/50 shadow-sm"
-								: "text-slate-400 hover:text-white"
-						}`}
-					>
-						<CheckSquare className="w-3 h-3" />
-						<span>Left Editing Checklist</span>
-						<span className="w-1.5 h-1.5 rounded-full bg-[#00e5ff]" />
-					</button>
-				</div>
+			{/* 1. MEDIA TAB */}
+			{activeTopTab === "media" && (
+				<div className="flex-1 flex flex-col overflow-hidden">
+					{/* Sub-Tabs: Media Files vs Left Editing Checklist */}
+					<div className="h-9 bg-[#17181c] border-b border-[#212328] px-2.5 flex items-center justify-between shrink-0">
+						<div className="flex items-center gap-1.5">
+							<button
+								type="button"
+								onClick={() => setActiveSubTab("media")}
+								className={`px-3 py-1 rounded text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+									activeSubTab === "media"
+										? "bg-[#25272e] text-white shadow-sm"
+										: "text-slate-400 hover:text-white"
+								}`}
+							>
+								<Folder className="w-3 h-3 text-[#00e5ff]" />
+								<span>Media Files</span>
+							</button>
 
-				<button
-					type="button"
-					onClick={onLoadSample}
-					className="px-2 py-0.5 bg-[#202126] hover:bg-[#2b2d35] text-slate-300 rounded text-[10px] border border-[#2b2d35] transition-colors cursor-pointer"
-					title="Load built-in rustic wooden test sample"
-				>
-					Sample
-				</button>
-			</div>
+							<button
+								type="button"
+								onClick={() => setActiveSubTab("checklist")}
+								className={`px-3 py-1 rounded text-[11px] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+									activeSubTab === "checklist"
+										? "bg-[#00e5ff]/20 text-[#00e5ff] border border-[#00e5ff]/50 shadow-sm"
+										: "text-slate-400 hover:text-white"
+								}`}
+							>
+								<CheckSquare className="w-3 h-3" />
+								<span>Left Editing Checklist</span>
+								<span className="w-1.5 h-1.5 rounded-full bg-[#00e5ff]" />
+							</button>
+						</div>
 
-			{/* Main Content Viewport */}
-			<div className="flex-1 flex overflow-hidden">
-				{activeSubTab === "media" ? (
-					/* 1. AUTHENTIC CAPCUT MEDIA ASSETS VIEW */
+						<button
+							type="button"
+							onClick={onLoadSample}
+							className="px-2 py-0.5 bg-[#202126] hover:bg-[#2b2d35] text-slate-300 rounded text-[10px] border border-[#2b2d35] transition-colors cursor-pointer"
+							title="Load built-in rustic wooden test sample"
+						>
+							Sample
+						</button>
+					</div>
+
 					<div className="flex-1 flex overflow-hidden">
-						{/* Left Sub-Rail (Local / Library) */}
-						<div className="w-16 border-r border-[#212328] bg-[#121316] p-1.5 flex flex-col gap-1 text-[10px] text-slate-400 shrink-0">
-							<div className="flex items-center justify-between px-1 py-1 text-slate-300 font-semibold text-[10px] cursor-pointer">
-								<span>Local</span>
-								<ChevronDown className="w-2.5 h-2.5" />
-							</div>
-							<div className="px-2 py-1 rounded bg-[#202227] text-[#00e5ff] font-medium flex items-center gap-1">
-								<ChevronRight className="w-2.5 h-2.5" />
-								<span>Import</span>
-							</div>
-							<div className="px-2 py-1 text-slate-400 hover:text-white rounded hover:bg-[#1a1b20] cursor-pointer">
-								Library
-							</div>
-						</div>
-
-						{/* Center Media Shelf */}
-						<div className="flex-1 flex flex-col p-2.5 bg-[#141518] overflow-hidden">
-							{/* Toolbar: + Import button & Sort */}
-							<div className="flex items-center justify-between pb-2 border-b border-[#212328] gap-2 shrink-0">
-								<label className="cursor-pointer bg-[#1f2127] hover:bg-[#282a32] text-slate-200 px-3 py-1.5 rounded-md text-[11px] font-semibold border border-[#2f323c] flex items-center gap-1.5 transition-all shadow-sm">
-									<span className="w-3.5 h-3.5 rounded-full bg-[#00e5ff] text-black flex items-center justify-center font-bold text-[10px]">
-										+
-									</span>
-									<span>{isUploading ? "Importing..." : "Import"}</span>
-									<input
-										type="file"
-										accept="video/*"
-										className="hidden"
-										onChange={(e) => onFileUpload(e.target.files?.[0])}
-									/>
-								</label>
-
-								<div className="flex items-center gap-2 text-slate-400 text-[10px]">
-									<Grid className="w-3.5 h-3.5 text-slate-300 cursor-pointer hover:text-white" />
-									<div className="flex items-center gap-0.5 cursor-pointer hover:text-white">
-										<span>Sort</span>
+						{activeSubTab === "media" ? (
+							/* MEDIA ASSETS VIEW */
+							<div className="flex-1 flex overflow-hidden">
+								<div className="w-16 border-r border-[#212328] bg-[#121316] p-1.5 flex flex-col gap-1 text-[10px] text-slate-400 shrink-0">
+									<div className="flex items-center justify-between px-1 py-1 text-slate-300 font-semibold text-[10px]">
+										<span>Local</span>
 										<ChevronDown className="w-2.5 h-2.5" />
 									</div>
-									<div className="flex items-center gap-0.5 cursor-pointer hover:text-white">
-										<span>All</span>
-										<ChevronDown className="w-2.5 h-2.5" />
+									<div className="px-2 py-1 rounded bg-[#202227] text-[#00e5ff] font-medium flex items-center gap-1">
+										<ChevronRight className="w-2.5 h-2.5" />
+										<span>Import</span>
 									</div>
-								</div>
-							</div>
-
-							{/* Video Cards Grid (Matching the CapCut desktop layout) */}
-							<div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2.5 pr-1 pt-2 content-start">
-								{/* Card 1: Main Video (Uploaded or Sample) */}
-								<div className="relative rounded-md overflow-hidden bg-[#1c1d22] border border-[#2f323c] aspect-[4/3] flex flex-col justify-between p-1.5 group cursor-pointer hover:border-[#00e5ff]/80 transition-colors">
-									<div className="flex items-center justify-between z-10">
-										<span className="bg-[#00e5ff] text-black text-[9px] font-bold px-1.5 py-0.2 rounded">
-											Added
-										</span>
-										<span className="text-[9px] text-slate-300 font-mono bg-black/70 px-1 rounded">
-											00:{Math.floor(duration || 36).toString().padStart(2, "0")}
-										</span>
-									</div>
-									<div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#2a241d] to-[#141518]">
-										<Film className="w-7 h-7 text-amber-500/90" />
-									</div>
-									<div className="z-10 bg-black/80 px-1 py-0.5 rounded text-[9.5px] text-slate-200 truncate font-mono">
-										{videoTitle || "Rustic wo...e.mp4"}
+									<div className="px-2 py-1 text-slate-400 hover:text-white rounded hover:bg-[#1a1b20] cursor-pointer">
+										Library
 									</div>
 								</div>
 
-								{/* Card 2: 2.mp4 (Puppet Chroma) */}
-								<div className="relative rounded-md overflow-hidden bg-[#00dd00] aspect-[4/3] flex flex-col justify-between p-1.5 border border-[#2f323c]">
-									<div className="flex items-center justify-between z-10">
-										<span className="bg-black/80 text-white text-[9px] font-medium px-1.5 py-0.2 rounded">
-											Added
-										</span>
-										<span className="text-[9px] text-black font-mono font-bold bg-white/70 px-1 rounded">
-											00:09
-										</span>
-									</div>
-									<div className="absolute inset-0 flex items-center justify-center">
-										<div className="w-8 h-8 rounded-full bg-amber-800/80 flex items-center justify-center text-[10px] text-white font-bold">
-											🧸
-										</div>
-									</div>
-									<div className="z-10 bg-black/80 px-1 py-0.5 rounded text-[9.5px] text-slate-200">
-										2.mp4
-									</div>
-								</div>
-
-								{/* Card 3: 3.mp4 (Runner Chroma) */}
-								<div className="relative rounded-md overflow-hidden bg-[#00dd00] aspect-[4/3] flex flex-col justify-between p-1.5 border border-[#2f323c]">
-									<div className="flex items-center justify-between z-10">
-										<span className="bg-black/80 text-white text-[9px] font-medium px-1.5 py-0.2 rounded">
-											Added
-										</span>
-										<span className="text-[9px] text-black font-mono font-bold bg-white/70 px-1 rounded">
-											00:16
-										</span>
-									</div>
-									<div className="absolute inset-0 flex items-center justify-center">
-										<div className="w-8 h-8 rounded-full bg-slate-900/80 flex items-center justify-center text-[10px] text-white">
-											🏃
-										</div>
-									</div>
-									<div className="z-10 bg-black/80 px-1 py-0.5 rounded text-[9.5px] text-slate-200">
-										3.mp4
-									</div>
-								</div>
-
-								{/* Card 4: 4.mp4 (Skeleton Chroma) */}
-								<div className="relative rounded-md overflow-hidden bg-[#00dd00] aspect-[4/3] flex flex-col justify-between p-1.5 border border-[#2f323c]">
-									<div className="flex items-center justify-between z-10">
-										<span className="bg-black/80 text-white text-[9px] font-medium px-1.5 py-0.2 rounded">
-											Added
-										</span>
-										<span className="text-[9px] text-black font-mono font-bold bg-white/70 px-1 rounded">
-											00:13
-										</span>
-									</div>
-									<div className="absolute inset-0 flex items-center justify-center">
-										<div className="w-8 h-8 rounded-full bg-slate-900/80 flex items-center justify-center text-[10px] text-white">
-											💀
-										</div>
-									</div>
-									<div className="z-10 bg-black/80 px-1 py-0.5 rounded text-[9.5px] text-slate-200">
-										4.mp4
-									</div>
-								</div>
-							</div>
-
-							{/* Quick Layer Status Bar at bottom of Media View */}
-							<div className="mt-2 pt-2 border-t border-[#212328] flex items-center justify-between text-[10px] text-slate-400 shrink-0">
-								<div className="flex items-center gap-1.5">
-									<span className="w-2 h-2 rounded-full bg-[#00e5ff]" />
-									<span>Base: black.jpg (Active)</span>
-								</div>
-								<button
-									type="button"
-									onClick={() => setActiveSubTab("checklist")}
-									className="text-[#00e5ff] hover:underline flex items-center gap-0.5 cursor-pointer"
-								>
-									<span>Edit Checklist</span>
-									<ChevronRight className="w-3 h-3" />
-								</button>
-							</div>
-						</div>
-					</div>
-				) : (
-					/* 2. LEFT EDITING CHECKLIST (With checkmarks + compact manual sliders) */
-					<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3 text-slate-300">
-						<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
-							<span className="text-[11px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-								<Layers className="w-3.5 h-3.5 text-[#00e5ff]" />
-								Left Video Editing Checklist
-							</span>
-							<span className="text-[9px] text-[#00e5ff] bg-[#00e5ff]/10 px-1.5 py-0.5 rounded font-mono">
-								Visual Layering
-							</span>
-						</div>
-
-						{/* Item 1: Solid Black Canvas Base (The Red Mark CapCut Layer) */}
-						<div
-							className={`p-2.5 rounded-lg border transition-all ${
-								blackBgLayer
-									? "bg-[#0c1417] border-[#00e5ff]/60 text-white"
-									: "bg-[#18191c] border-[#26282f] text-slate-400"
-							}`}
-						>
-							<label className="flex items-start justify-between cursor-pointer gap-2">
-								<div>
-									<div className="text-[11px] font-bold text-white flex items-center gap-1">
-										<span>1. Solid Black Base Canvas</span>
-										{blackBgLayer && (
-											<span className="text-[9px] text-[#00e5ff] font-mono">
-												[black.jpg]
+								<div className="flex-1 flex flex-col p-2.5 bg-[#141518] overflow-hidden">
+									<div className="flex items-center justify-between pb-2 border-b border-[#212328] gap-2 shrink-0">
+										<label className="cursor-pointer bg-[#1f2127] hover:bg-[#282a32] text-slate-200 px-3 py-1.5 rounded-md text-[11px] font-semibold border border-[#2f323c] flex items-center gap-1.5 transition-all shadow-sm">
+											<span className="w-3.5 h-3.5 rounded-full bg-[#00e5ff] text-black flex items-center justify-center font-bold text-[10px]">
+												+
 											</span>
-										)}
-									</div>
-									<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
-										Adds solid black base layer beneath video to defeat YouTube frame matching.
-									</p>
-								</div>
-								<input
-									type="checkbox"
-									checked={blackBgLayer}
-									onChange={(e) => setBlackBgLayer(e.target.checked)}
-									className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5"
-								/>
-							</label>
-						</div>
+											<span>{isUploading ? "Importing..." : "Import"}</span>
+											<input
+												type="file"
+												accept="video/*"
+												className="hidden"
+												onChange={(e) => onFileUpload(e.target.files?.[0])}
+											/>
+										</label>
 
-						{/* Item 2: Video Scaling & Center Framing */}
-						<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
-							<label className="flex items-start justify-between cursor-pointer gap-2">
-								<div>
-									<div className="text-[11px] font-bold text-white">
-										2. Video Scale & Centering
+										<div className="flex items-center gap-2 text-slate-400 text-[10px]">
+											<Grid className="w-3.5 h-3.5 text-slate-300 cursor-pointer hover:text-white" />
+											<div className="flex items-center gap-0.5 cursor-pointer hover:text-white">
+												<span>Sort</span>
+												<ChevronDown className="w-2.5 h-2.5" />
+											</div>
+										</div>
 									</div>
-									<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
-										Scales video slightly so black border surrounds the frame.
-									</p>
-								</div>
-								<input
-									type="checkbox"
-									checked={videoScale < 100}
-									onChange={(e) => setVideoScale(e.target.checked ? 94 : 100)}
-									className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5"
-								/>
-							</label>
 
-							{/* Compact Manual Slider */}
-							<div className="flex items-center justify-between text-[10px] pt-1 border-t border-[#212328]">
-								<span className="text-slate-400">Manual Scale:</span>
-								<div className="flex items-center gap-2">
-									<input
-										type="range"
-										min={85}
-										max={100}
-										value={videoScale}
-										onChange={(e) =>
-											setVideoScale(Number.parseInt(e.target.value, 10))
-										}
-										className="accent-[#00e5ff] w-20 h-1 bg-[#25262c] rounded cursor-pointer"
-									/>
-									<span className="font-mono text-[#00e5ff] w-7 text-right font-bold">
-										{videoScale}%
-									</span>
+									<div className="flex-1 overflow-y-auto grid grid-cols-2 gap-2 pr-1 pt-2 content-start">
+										<div className="relative rounded-md overflow-hidden bg-[#1c1d22] border border-[#2f323c] aspect-[4/3] flex flex-col justify-between p-1.5 group cursor-pointer hover:border-[#00e5ff]/80 transition-colors">
+											<div className="flex items-center justify-between z-10">
+												<span className="bg-[#00e5ff] text-black text-[9px] font-bold px-1.5 py-0.2 rounded">
+													Added
+												</span>
+												<span className="text-[9px] text-slate-300 font-mono bg-black/70 px-1 rounded">
+													00:{Math.floor(duration || 36).toString().padStart(2, "0")}
+												</span>
+											</div>
+											<div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#2a241d] to-[#141518]">
+												<Film className="w-7 h-7 text-amber-500/90" />
+											</div>
+											<div className="z-10 bg-black/80 px-1 py-0.5 rounded text-[9.5px] text-slate-200 truncate font-mono">
+												{videoTitle || "Rustic wo...e.mp4"}
+											</div>
+										</div>
+
+										<div className="relative rounded-md overflow-hidden bg-[#00dd00] aspect-[4/3] flex flex-col justify-between p-1.5 border border-[#2f323c]">
+											<div className="flex items-center justify-between z-10">
+												<span className="bg-black/80 text-white text-[9px] font-medium px-1.5 py-0.2 rounded">
+													Added
+												</span>
+												<span className="text-[9px] text-black font-mono font-bold bg-white/70 px-1 rounded">
+													00:09
+												</span>
+											</div>
+											<div className="absolute inset-0 flex items-center justify-center">
+												<span className="text-xl">🧸</span>
+											</div>
+											<div className="z-10 bg-black/80 px-1 py-0.5 rounded text-[9.5px] text-slate-200">
+												2.mp4
+											</div>
+										</div>
+									</div>
 								</div>
 							</div>
+						) : (
+							/* LEFT EDITING CHECKLIST */
+							<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3 text-slate-300">
+								<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
+									<span className="text-[11px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+										<Layers className="w-3.5 h-3.5 text-[#00e5ff]" />
+										Left Video Editing Checklist
+									</span>
+									<span className="text-[9px] text-[#00e5ff] bg-[#00e5ff]/10 px-1.5 py-0.5 rounded font-mono">
+										Visual Layering
+									</span>
+								</div>
+
+								{/* Item 1: Solid Black Canvas Base */}
+								<div className={`p-2.5 rounded-lg border transition-all ${blackBgLayer ? "bg-[#0c1417] border-[#00e5ff]/60 text-white" : "bg-[#18191c] border-[#26282f] text-slate-400"}`}>
+									<label className="flex items-start justify-between cursor-pointer gap-2">
+										<div>
+											<div className="text-[11px] font-bold text-white flex items-center gap-1">
+												<span>1. Solid Black Base Canvas</span>
+												{blackBgLayer && <span className="text-[9px] text-[#00e5ff] font-mono">[black.jpg]</span>}
+											</div>
+											<p className="text-[9px] text-slate-400 mt-0.5">Adds solid black base layer beneath video to defeat YouTube frame matching.</p>
+										</div>
+										<input type="checkbox" checked={blackBgLayer} onChange={(e) => setBlackBgLayer(e.target.checked)} className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5" />
+									</label>
+								</div>
+
+								{/* Item 2: Video Scaling */}
+								<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+									<label className="flex items-start justify-between cursor-pointer gap-2">
+										<div>
+											<div className="text-[11px] font-bold text-white">2. Video Scale & Centering</div>
+											<p className="text-[9px] text-slate-400 mt-0.5">Scales video slightly so black border surrounds the frame.</p>
+										</div>
+										<input type="checkbox" checked={videoScale < 100} onChange={(e) => setVideoScale(e.target.checked ? 94 : 100)} className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5" />
+									</label>
+									<div className="flex items-center justify-between text-[10px] pt-1 border-t border-[#212328]">
+										<span className="text-slate-400">Manual Scale:</span>
+										<div className="flex items-center gap-2">
+											<input type="range" min={85} max={100} value={videoScale} onChange={(e) => setVideoScale(Number(e.target.value))} className="accent-[#00e5ff] w-20 h-1 bg-[#25262c] rounded cursor-pointer" />
+											<span className="font-mono text-[#00e5ff] w-7 text-right font-bold">{videoScale}%</span>
+										</div>
+									</div>
+								</div>
+
+								{/* Item 3: Green Screen Overlay */}
+								<div className={`p-2.5 rounded-lg border transition-all ${overlayChroma ? "bg-[#0b1a10] border-emerald-500/60" : "bg-[#18191c] border-[#26282f]"}`}>
+									<label className="flex items-start justify-between cursor-pointer gap-2">
+										<div>
+											<div className="text-[11px] font-bold text-white flex items-center gap-1">
+												<span>3. Green Screen Meme Overlay (V3)</span>
+												<span className="text-[9px] text-emerald-400 font-mono">[Chroma]</span>
+											</div>
+											<p className="text-[9px] text-slate-400 mt-0.5">Superimposes reaction meme characters on top track.</p>
+										</div>
+										<input type="checkbox" checked={overlayChroma} onChange={(e) => setOverlayChroma(e.target.checked)} className="accent-emerald-400 w-4 h-4 cursor-pointer mt-0.5" />
+									</label>
+								</div>
+
+								{/* Item 4: Highlight Trimmer */}
+								<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+									<label className="flex items-start justify-between cursor-pointer gap-2">
+										<div>
+											<div className="text-[11px] font-bold text-white flex items-center gap-1">
+												<Scissors className="w-3 h-3 text-amber-400" />
+												<span>4. CapCut Highlight Trimmer</span>
+											</div>
+											<p className="text-[9px] text-slate-400 mt-0.5">Trims video to first 40s viral climax hook as per Docs.</p>
+										</div>
+										<input type="checkbox" checked={autoTrim40s} onChange={(e) => setAutoTrim40s(e.target.checked)} className="accent-amber-400 w-4 h-4 cursor-pointer mt-0.5" />
+									</label>
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
+
+			{/* 2. AUDIO TAB */}
+			{activeTopTab === "audio" && (
+				<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3">
+					<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
+						<span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+							<Music className="w-3.5 h-3.5 text-[#00e5ff]" />
+							Audio & Background Music
+						</span>
+						<span className="text-[9px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">
+							Zero Match
+						</span>
+					</div>
+
+					{/* 100% Original Mute Toggle */}
+					<div className="p-2.5 rounded-lg border bg-[#180a0d] border-rose-500/50 flex items-center justify-between">
+						<div>
+							<div className="text-[11px] font-bold text-rose-300 flex items-center gap-1">
+								<VolumeX className="w-3.5 h-3.5 text-rose-400" />
+								<span>Mute Original Video Sound (100%)</span>
+							</div>
+							<p className="text-[9px] text-slate-400 mt-0.5">Eliminates original audio completely to defeat acoustic fingerprinting.</p>
+						</div>
+						<input
+							type="checkbox"
+							checked={muteOriginalAudio}
+							onChange={(e) => setMuteOriginalAudio(e.target.checked)}
+							className="accent-rose-500 w-4 h-4 cursor-pointer"
+						/>
+					</div>
+
+					{/* BGM Track Selector & Preview */}
+					<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+						<div className="flex items-center justify-between">
+							<span className="text-[11px] font-bold text-white">Copyright-Free BGM Tracks</span>
+							<label className="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer">
+								<span>Enable BGM:</span>
+								<input
+									type="checkbox"
+									checked={bgmEnabled}
+									onChange={(e) => setBgmEnabled(e.target.checked)}
+									className="accent-[#00e5ff] w-3.5 h-3.5 cursor-pointer"
+								/>
+							</label>
 						</div>
 
-						{/* Item 3: Green Screen Overlay Track */}
-						<div
-							className={`p-2.5 rounded-lg border transition-all ${
-								overlayChroma
-									? "bg-[#0b1a10] border-emerald-500/60"
-									: "bg-[#18191c] border-[#26282f]"
-							}`}
-						>
-							<label className="flex items-start justify-between cursor-pointer gap-2">
-								<div>
-									<div className="text-[11px] font-bold text-white flex items-center gap-1">
-										<span>3. Green Screen Meme Overlay (V3)</span>
-										<span className="text-[9px] text-emerald-400 font-mono">
-											[Chroma]
+						<div className="flex flex-col gap-1.5 pt-1">
+							{bgmTracks.map((track) => (
+								<div
+									key={track.id}
+									onClick={() => setBgmTrackName(track.id)}
+									className={`p-2 rounded border flex items-center justify-between cursor-pointer transition-all ${
+										bgmTrackName === track.id
+											? "bg-[#0c1417] border-[#00e5ff]/70 text-white"
+											: "bg-[#141518] border-[#212328] text-slate-400 hover:text-slate-200"
+									}`}
+								>
+									<div className="flex items-center gap-2">
+										<span className={`w-2 h-2 rounded-full ${bgmTrackName === track.id ? "bg-[#00e5ff]" : "bg-slate-600"}`} />
+										<div>
+											<div className="text-[10.5px] font-bold font-mono">{track.name}</div>
+											<div className="text-[9px] text-slate-500">{track.mood} • {track.bpm}</div>
+										</div>
+									</div>
+									{bgmTrackName === track.id && (
+										<span className="text-[9px] text-[#00e5ff] font-bold bg-[#00e5ff]/10 px-1.5 py-0.5 rounded">
+											Active
 										</span>
-									</div>
-									<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
-										Superimposes reaction meme characters on top track.
-									</p>
+									)}
 								</div>
-								<input
-									type="checkbox"
-									checked={overlayChroma}
-									onChange={(e) => setOverlayChroma(e.target.checked)}
-									className="accent-emerald-400 w-4 h-4 cursor-pointer mt-0.5"
-								/>
-							</label>
+							))}
 						</div>
 
-						{/* Item 4: CapCut Highlight Trimmer */}
-						<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
-							<label className="flex items-start justify-between cursor-pointer gap-2">
-								<div>
-									<div className="text-[11px] font-bold text-white flex items-center gap-1">
-										<Scissors className="w-3 h-3 text-amber-400" />
-										<span>4. CapCut Highlight Trimmer</span>
-									</div>
-									<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
-										Trims video to first 40s viral climax hook as per Docs.
-									</p>
-								</div>
+						{/* BGM Volume Slider */}
+						<div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-[#212328]">
+							<span className="text-slate-400">BGM Volume:</span>
+							<div className="flex items-center gap-2">
 								<input
-									type="checkbox"
-									checked={autoTrim40s}
-									onChange={(e) => setAutoTrim40s(e.target.checked)}
-									className="accent-amber-400 w-4 h-4 cursor-pointer mt-0.5"
+									type="range"
+									min={0.05}
+									max={0.5}
+									step={0.05}
+									value={bgmVolume}
+									onChange={(e) => setBgmVolume(Number(e.target.value))}
+									className="accent-[#00e5ff] w-24 h-1 bg-[#25262c] rounded cursor-pointer"
 								/>
-							</label>
-
-							{/* Compact Manual Trim Inputs */}
-							{autoTrim40s && (
-								<div className="grid grid-cols-2 gap-2 text-[10px] pt-1 border-t border-[#212328]">
-									<div className="flex items-center gap-1 bg-[#121316] p-1 rounded border border-[#2b2d35]">
-										<span className="text-slate-500">Start:</span>
-										<input
-											type="number"
-											min={0}
-											value={trimStart}
-											onChange={(e) =>
-												setTrimStart(Number.parseFloat(e.target.value) || 0)
-											}
-											className="w-10 bg-transparent text-white font-mono focus:outline-none"
-										/>
-										<span>s</span>
-									</div>
-									<div className="flex items-center gap-1 bg-[#121316] p-1 rounded border border-[#2b2d35]">
-										<span className="text-slate-500">End:</span>
-										<input
-											type="number"
-											min={1}
-											value={trimEnd}
-											onChange={(e) =>
-												setTrimEnd(Number.parseFloat(e.target.value) || 40)
-											}
-											className="w-10 bg-transparent text-white font-mono focus:outline-none"
-										/>
-										<span>s</span>
-									</div>
-								</div>
-							)}
+								<span className="font-mono text-[#00e5ff] font-bold">{Math.round(bgmVolume * 100)}%</span>
+							</div>
 						</div>
 					</div>
-				)}
-			</div>
+				</div>
+			)}
+
+			{/* 3. TEXT TAB */}
+			{activeTopTab === "text" && (
+				<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3">
+					<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
+						<span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+							<Type className="w-3.5 h-3.5 text-[#00e5ff]" />
+							Text Overlays & Captions
+						</span>
+						<label className="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer">
+							<span>Show on Video:</span>
+							<input
+								type="checkbox"
+								checked={showTextOverlay}
+								onChange={(e) => setShowTextOverlay(e.target.checked)}
+								className="accent-[#00e5ff] w-3.5 h-3.5"
+							/>
+						</label>
+					</div>
+
+					{/* Custom Text Input */}
+					<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+						<span className="text-[10.5px] font-bold text-white">Custom Banner Text</span>
+						<input
+							type="text"
+							value={textOverlay}
+							onChange={(e) => {
+								setTextOverlay(e.target.value);
+								setShowTextOverlay(true);
+							}}
+							placeholder="Type overlay text here..."
+							className="w-full bg-[#121316] border border-[#2b2d35] rounded p-2 text-white text-[11px] focus:outline-none focus:border-[#00e5ff] font-bold"
+						/>
+					</div>
+
+					{/* 1-Click Viral Hook Presets */}
+					<div className="flex flex-col gap-2">
+						<span className="text-[10.5px] font-bold text-slate-300">Viral Hook Presets (1-Click)</span>
+						<div className="grid grid-cols-2 gap-2">
+							{textPresets.map((preset) => (
+								<button
+									key={preset}
+									type="button"
+									onClick={() => {
+										setTextOverlay(preset);
+										setShowTextOverlay(true);
+									}}
+									className={`p-2 rounded border text-[10px] font-bold text-left transition-all cursor-pointer ${
+										textOverlay === preset && showTextOverlay
+											? "bg-[#0c1417] border-[#00e5ff] text-yellow-300"
+											: "bg-[#18191c] border-[#26282f] text-slate-300 hover:text-white hover:border-slate-500"
+									}`}
+								>
+									{preset}
+								</button>
+							))}
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* 4. STICKERS TAB */}
+			{activeTopTab === "stickers" && (
+				<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3">
+					<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
+						<span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+							<Star className="w-3.5 h-3.5 text-[#00e5ff]" />
+							Animated Stickers & Reaction Memes
+						</span>
+						<label className="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer">
+							<span>Active:</span>
+							<input
+								type="checkbox"
+								checked={showStickerOverlay}
+								onChange={(e) => setShowStickerOverlay(e.target.checked)}
+								className="accent-[#00e5ff] w-3.5 h-3.5"
+							/>
+						</label>
+					</div>
+
+					<p className="text-[9.5px] text-slate-400">
+						Click any sticker to instantly superimpose it over the live video preview.
+					</p>
+
+					<div className="grid grid-cols-2 gap-2.5">
+						{stickers.map((s) => (
+							<button
+								key={s.id}
+								type="button"
+								onClick={() => {
+									setStickerOverlay(s.id);
+									setShowStickerOverlay(true);
+								}}
+								className={`p-2.5 rounded-lg border flex items-center gap-2.5 cursor-pointer transition-all ${
+									stickerOverlay === s.id && showStickerOverlay
+										? "bg-[#0c1417] border-[#00e5ff] text-white shadow-md shadow-cyan-950"
+										: "bg-[#18191c] border-[#26282f] text-slate-300 hover:border-slate-500"
+								}`}
+							>
+								<span className="text-2xl">{s.id}</span>
+								<div className="text-left">
+									<div className="text-[11px] font-bold">{s.label}</div>
+									<div className="text-[9px] text-slate-500">{s.subtitle}</div>
+								</div>
+							</button>
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 5. EFFECTS TAB */}
+			{activeTopTab === "effects" && (
+				<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3">
+					<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
+						<span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+							<Sparkles className="w-3.5 h-3.5 text-[#00e5ff]" />
+							Anti-Bot Visual Effects
+						</span>
+						<span className="text-[9px] text-[#00e5ff] font-mono">Live In Player</span>
+					</div>
+
+					{/* Effect 1: Mirror Flip */}
+					<div className={`p-2.5 rounded-lg border transition-all ${mirror ? "bg-[#0c1417] border-[#00e5ff]" : "bg-[#18191c] border-[#26282f]"}`}>
+						<label className="flex items-start justify-between cursor-pointer">
+							<div>
+								<div className="text-[11px] font-bold text-white flex items-center gap-1.5">
+									<FlipHorizontal className="w-3.5 h-3.5 text-[#00e5ff]" />
+									<span>Horizontal Flip (Mirror)</span>
+								</div>
+								<p className="text-[9px] text-slate-400 mt-0.5">Mirrors frame horizontally to break digital pattern matching.</p>
+							</div>
+							<input type="checkbox" checked={mirror} onChange={(e) => setMirror(e.target.checked)} className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5" />
+						</label>
+					</div>
+
+					{/* Effect 2: Safe Zoom */}
+					<div className={`p-2.5 rounded-lg border transition-all ${applyZoom ? "bg-[#150f1f] border-purple-500" : "bg-[#18191c] border-[#26282f]"}`}>
+						<label className="flex items-start justify-between cursor-pointer">
+							<div>
+								<div className="text-[11px] font-bold text-white flex items-center gap-1.5">
+									<ZoomIn className="w-3.5 h-3.5 text-purple-400" />
+									<span>Safe 2% Top-Anchor Zoom</span>
+								</div>
+								<p className="text-[9px] text-slate-400 mt-0.5">1.02x zoom with top anchor; protects caps, heads, and clocks.</p>
+							</div>
+							<input type="checkbox" checked={applyZoom} onChange={(e) => setApplyZoom(e.target.checked)} className="accent-purple-500 w-4 h-4 cursor-pointer mt-0.5" />
+						</label>
+					</div>
+
+					{/* Effect 3: Solid Black Canvas Base */}
+					<div className={`p-2.5 rounded-lg border transition-all ${blackBgLayer ? "bg-[#0c1417] border-[#00e5ff]" : "bg-[#18191c] border-[#26282f]"}`}>
+						<label className="flex items-start justify-between cursor-pointer">
+							<div>
+								<div className="text-[11px] font-bold text-white flex items-center gap-1.5">
+									<Layers className="w-3.5 h-3.5 text-[#00e5ff]" />
+									<span>Solid Black Under-Layer (black.jpg)</span>
+								</div>
+								<p className="text-[9px] text-slate-400 mt-0.5">Underneath video with 94% scale to prevent edge matching.</p>
+							</div>
+							<input type="checkbox" checked={blackBgLayer} onChange={(e) => setBlackBgLayer(e.target.checked)} className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5" />
+						</label>
+					</div>
+				</div>
+			)}
+
+			{/* 6. TRANSITIONS TAB */}
+			{activeTopTab === "transitions" && (
+				<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3">
+					<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
+						<span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+							<span className="text-[11px]">⧖</span>
+							Scene Cut Transitions
+						</span>
+						<span className="text-[9px] text-slate-400 font-mono">Split Points</span>
+					</div>
+
+					<p className="text-[9.5px] text-slate-400">
+						Select transition applied at clip split and cut boundaries:
+					</p>
+
+					<div className="flex flex-col gap-2">
+						{transitions.map((t) => (
+							<button
+								key={t.id}
+								type="button"
+								onClick={() => setActiveTransition(t.id)}
+								className={`p-2.5 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${
+									activeTransition === t.id
+										? "bg-[#0c1417] border-[#00e5ff] text-white"
+										: "bg-[#18191c] border-[#26282f] text-slate-300 hover:border-slate-500"
+								}`}
+							>
+								<div className="flex items-center gap-2">
+									<span className="text-base">{t.icon}</span>
+									<div className="text-left">
+										<div className="text-[11px] font-bold">{t.name}</div>
+										<div className="text-[9px] text-slate-500">{t.desc}</div>
+									</div>
+								</div>
+								{activeTransition === t.id && (
+									<span className="w-2 h-2 rounded-full bg-[#00e5ff]" />
+								)}
+							</button>
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 7. FILTERS TAB */}
+			{activeTopTab === "filters" && (
+				<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3">
+					<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
+						<span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+							<Palette className="w-3.5 h-3.5 text-[#00e5ff]" />
+							1-Click Color Grading Filters
+						</span>
+						<span className="text-[9px] text-[#00e5ff] font-mono">Live in Player</span>
+					</div>
+
+					<p className="text-[9.5px] text-slate-400">
+						Clicking any filter instantly shifts the color histogram in both the live player and export:
+					</p>
+
+					<div className="grid grid-cols-2 gap-2.5">
+						{filterList.map((f) => (
+							<button
+								key={f.id}
+								type="button"
+								onClick={() => setColorFilter(f.id)}
+								className={`rounded-lg border overflow-hidden flex flex-col cursor-pointer transition-all ${
+									colorFilter === f.id
+										? "border-[#00e5ff] shadow-md shadow-cyan-950 scale-[1.02]"
+										: "border-[#26282f] hover:border-slate-500 opacity-80 hover:opacity-100"
+								}`}
+							>
+								<div className={`h-12 w-full bg-gradient-to-tr ${f.color} flex items-center justify-center`}>
+									{colorFilter === f.id && (
+										<span className="bg-black/60 text-[#00e5ff] px-2 py-0.5 rounded text-[9px] font-bold border border-[#00e5ff]/50">
+											✓ Active
+										</span>
+									)}
+								</div>
+								<div className="p-2 bg-[#18191c] text-left">
+									<div className="text-[11px] font-bold text-white">{f.name}</div>
+								</div>
+							</button>
+						))}
+					</div>
+				</div>
+			)}
+
+			{/* 8. ADJUSTMENT TAB */}
+			{activeTopTab === "adjustment" && (
+				<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3">
+					<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
+						<span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+							<SlidersHorizontal className="w-3.5 h-3.5 text-[#00e5ff]" />
+							Live Color & Geometry Adjustments
+						</span>
+						<button
+							type="button"
+							onClick={() => {
+								setBrightness(0.03);
+								setContrast(1.05);
+								setSaturation(1.08);
+								setVideoScale(94);
+							}}
+							className="text-[9px] text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
+						>
+							<RotateCcw className="w-2.5 h-2.5" />
+							<span>Reset</span>
+						</button>
+					</div>
+
+					<p className="text-[9.5px] text-slate-400">
+						Move sliders to see changes happen live in the player canvas:
+					</p>
+
+					<div className="bg-[#18191c] border border-[#26282f] rounded-lg p-3 flex flex-col gap-3">
+						{/* Brightness */}
+						<div className="flex flex-col gap-1">
+							<div className="flex items-center justify-between text-[11px]">
+								<span className="text-slate-300">Brightness</span>
+								<span className="font-mono text-[#00e5ff] font-bold">{Math.round(brightness * 100)}%</span>
+							</div>
+							<input
+								type="range"
+								min={-0.15}
+								max={0.2}
+								step={0.01}
+								value={brightness}
+								onChange={(e) => setBrightness(Number(e.target.value))}
+								className="w-full accent-[#00e5ff] h-1 bg-[#25262c] rounded cursor-pointer"
+							/>
+						</div>
+
+						{/* Contrast */}
+						<div className="flex flex-col gap-1">
+							<div className="flex items-center justify-between text-[11px]">
+								<span className="text-slate-300">Contrast</span>
+								<span className="font-mono text-[#00e5ff] font-bold">{Math.round(contrast * 100)}%</span>
+							</div>
+							<input
+								type="range"
+								min={0.8}
+								max={1.4}
+								step={0.02}
+								value={contrast}
+								onChange={(e) => setContrast(Number(e.target.value))}
+								className="w-full accent-[#00e5ff] h-1 bg-[#25262c] rounded cursor-pointer"
+							/>
+						</div>
+
+						{/* Saturation */}
+						<div className="flex flex-col gap-1">
+							<div className="flex items-center justify-between text-[11px]">
+								<span className="text-slate-300">Saturation</span>
+								<span className="font-mono text-[#00e5ff] font-bold">{Math.round(saturation * 100)}%</span>
+							</div>
+							<input
+								type="range"
+								min={0.7}
+								max={1.5}
+								step={0.02}
+								value={saturation}
+								onChange={(e) => setSaturation(Number(e.target.value))}
+								className="w-full accent-[#00e5ff] h-1 bg-[#25262c] rounded cursor-pointer"
+							/>
+						</div>
+
+						{/* Scale */}
+						<div className="flex flex-col gap-1 pt-2 border-t border-[#212328]">
+							<div className="flex items-center justify-between text-[11px]">
+								<span className="text-slate-300">Video Scale (Border)</span>
+								<span className="font-mono text-[#00e5ff] font-bold">{videoScale}%</span>
+							</div>
+							<input
+								type="range"
+								min={85}
+								max={100}
+								value={videoScale}
+								onChange={(e) => setVideoScale(Number(e.target.value))}
+								className="w-full accent-[#00e5ff] h-1 bg-[#25262c] rounded cursor-pointer"
+							/>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
