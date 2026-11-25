@@ -56,6 +56,28 @@ export default function CapCutStudio() {
 	const [voiceoverFileName, setVoiceoverFileName] = useState(null);
 	const [voiceoverVolume, setVoiceoverVolume] = useState(1.2);
 
+	// Mode Switcher: 'auto' (1-click all safeguards) vs 'manual' (show all sliders & controls)
+	const [editMode, setEditMode] = useState("auto");
+
+	const handleSetEditMode = (mode) => {
+		setEditMode(mode);
+		if (mode === "auto") {
+			// Auto mode: all 8 anti-copyright safeguards locked & enabled
+			setBlackBgLayer(true);
+			setVideoScale(94);
+			setOverlayChroma(true);
+			setMirror(true);
+			setApplyZoom(true);
+			setColorFilter("cinematic");
+			setBrightness(0.03);
+			setContrast(1.05);
+			setSaturation(1.08);
+			setMuteOriginalAudio(true);
+			setBgmEnabled(true);
+			setMetadataClean(true);
+		}
+	};
+
 	// Export / Process State
 	const [isExporting, setIsExporting] = useState(false);
 	const [isCreatingVideo, setIsCreatingVideo] = useState(false);
@@ -233,6 +255,8 @@ export default function CapCutStudio() {
 				onExport={handleExport}
 				isExporting={isExporting}
 				hasVideo={Boolean(videoFilename)}
+				editMode={editMode}
+				setEditMode={handleSetEditMode}
 			/>
 
 			{/* 2. CapCut Middle Workspace (3 Columns: Left Panel Expanded, Center Player, Right Panel Expanded) */}
@@ -246,6 +270,8 @@ export default function CapCutStudio() {
 						videoTitle={videoTitle}
 						duration={duration}
 						isUploading={isUploading}
+						editMode={editMode}
+						setEditMode={handleSetEditMode}
 						blackBgLayer={blackBgLayer}
 						setBlackBgLayer={setBlackBgLayer}
 						videoScale={videoScale}
@@ -337,6 +363,8 @@ export default function CapCutStudio() {
 				{/* Column 3: Right Inspector & Right Editing Checklist (Expanded to 360px to fill the right red mark) */}
 				<div className="w-[360px] h-full shrink-0">
 					<CapCutInspector
+						editMode={editMode}
+						setEditMode={handleSetEditMode}
 						mirror={mirror}
 						setMirror={setMirror}
 						applyZoom={applyZoom}

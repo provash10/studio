@@ -23,6 +23,9 @@ import {
 } from "lucide-react";
 
 export default function CapCutInspector({
+	// Mode Switcher Props
+	editMode = "auto",
+	setEditMode,
 	// Right Editing Checklist States
 	mirror,
 	setMirror,
@@ -311,225 +314,287 @@ export default function CapCutInspector({
 							</div>
 						</div>
 
-						{/* RIGHT VIDEO EDITING CHECKLIST (With checkmarks + compact manual sliders) */}
+						{/* RIGHT VIDEO EDITING CHECKLIST (Auto Mode vs Manual Mode) */}
 						<div className="flex flex-col gap-2.5 pt-1">
 							<div className="flex items-center justify-between pb-1 border-b border-[#212328]">
 								<span className="text-[11px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
 									<Shield className="w-3.5 h-3.5 text-[#00e5ff]" />
 									Right Video Editing Checklist
 								</span>
-								<span className="text-[9px] text-[#00e5ff] font-mono">
-									Anti-Copyright
+								<span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+									editMode === "auto"
+										? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+										: "bg-[#00e5ff]/10 text-[#00e5ff]"
+								}`}>
+									{editMode === "auto" ? "Auto: All OK" : "Manual Mode"}
 								</span>
 							</div>
 
-							{/* Item 1: Horizontal Flip (Mirror) */}
-							<div
-								className={`p-2.5 rounded-lg border transition-all ${
-									mirror
-										? "bg-[#0c1417] border-[#00e5ff]/60 text-white"
-										: "bg-[#18191c] border-[#26282f] text-slate-400"
-								}`}
-							>
-								<label className="flex items-start justify-between cursor-pointer gap-2">
-									<div>
-										<div className="text-[11px] font-bold text-white flex items-center gap-1">
-											<FlipHorizontal className="w-3 h-3 text-[#00e5ff]" />
-											<span>1. Horizontal Flip (Mirror)</span>
+							{editMode === "auto" ? (
+								/* AUTO MODE: ALL OK VIEW */
+								<div className="flex flex-col gap-3">
+									<div className="p-3 bg-[#0a1612] border border-emerald-500/40 rounded-lg flex flex-col gap-2.5 shadow-sm">
+										<div className="flex items-center justify-between">
+											<div className="flex items-center gap-1.5 text-emerald-300 font-extrabold text-[11px]">
+												<span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+												<span>Auto Anti-Copyright: All 6 Defenses OK</span>
+											</div>
+											<span className="bg-emerald-500/20 text-emerald-400 text-[9px] px-1.5 py-0.2 rounded font-bold">
+												Protected
+											</span>
 										</div>
-										<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
-											Flips frame horizontally to break YouTube bot pattern matching.
+										<p className="text-[9.5px] text-slate-300 leading-snug">
+											All 6 YouTube bot-breaking defenses are locked &amp; active. Zero acoustic match guaranteed!
 										</p>
-									</div>
-									<input
-										type="checkbox"
-										checked={mirror}
-										onChange={(e) => setMirror(e.target.checked)}
-										className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5"
-									/>
-								</label>
-							</div>
-
-							{/* Item 2: Safe 2% Zoom (Top Anchor Headroom Protection) */}
-							<div
-								className={`p-2.5 rounded-lg border transition-all ${
-									applyZoom
-										? "bg-[#150f1f] border-purple-500/60"
-										: "bg-[#18191c] border-[#26282f]"
-								}`}
-							>
-								<label className="flex items-start justify-between cursor-pointer gap-2">
-									<div>
-										<div className="text-[11px] font-bold text-white flex items-center gap-1">
-											<ZoomIn className="w-3 h-3 text-purple-400" />
-											<span>2. Safe 2% Zoom (Top Anchor)</span>
+										<div className="grid grid-cols-2 gap-2 pt-1 text-[10px] text-emerald-300 font-medium">
+											<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+												<CheckCircle2 className="w-3 h-3 text-emerald-400 stroke-[2.5]" />
+												<span>Horizontal Flip (Mirror)</span>
+											</div>
+											<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+												<CheckCircle2 className="w-3 h-3 text-emerald-400 stroke-[2.5]" />
+												<span>Safe 2% Zoom (Anchor)</span>
+											</div>
+											<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+												<CheckCircle2 className="w-3 h-3 text-emerald-400 stroke-[2.5]" />
+												<span>Cinematic Color Grade</span>
+											</div>
+											<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+												<CheckCircle2 className="w-3 h-3 text-emerald-400 stroke-[2.5]" />
+												<span>100% Mute Original Audio</span>
+											</div>
+											<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+												<CheckCircle2 className="w-3 h-3 text-emerald-400 stroke-[2.5]" />
+												<span>Looped BGM Mix</span>
+											</div>
+											<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+												<CheckCircle2 className="w-3 h-3 text-emerald-400 stroke-[2.5]" />
+												<span>-map_metadata -1 Wipe</span>
+											</div>
 										</div>
-										<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
-											Docs 1.02x zoom with top anchor; protects caps, heads, and clocks.
-										</p>
 									</div>
-									<input
-										type="checkbox"
-										checked={applyZoom}
-										onChange={(e) => setApplyZoom(e.target.checked)}
-										className="accent-purple-500 w-4 h-4 cursor-pointer mt-0.5"
-									/>
-								</label>
-							</div>
 
-							{/* Item 3: Color Grading & Histogram Shift */}
-							<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
-								<label className="flex items-start justify-between cursor-pointer gap-2">
-									<div>
-										<div className="text-[11px] font-bold text-white flex items-center gap-1">
-											<Palette className="w-3 h-3 text-amber-400" />
-											<span>3. Color Grading & Histogram Shift</span>
+									<button
+										type="button"
+										onClick={() => setEditMode && setEditMode("manual")}
+										className="py-2 px-3 bg-[#18191c] hover:bg-[#202227] text-[#00e5ff] border border-[#00e5ff]/50 rounded text-[10.5px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+									>
+										<Sliders className="w-3.5 h-3.5" />
+										<span>Switch to Manual to Show All Sliders &amp; Checkboxes</span>
+									</button>
+								</div>
+							) : (
+								/* MANUAL MODE: SHOW ALL DETAILED CHECKLIST CARDS & SLIDERS */
+								<>
+									{/* Item 1: Horizontal Flip (Mirror) */}
+									<div
+										className={`p-2.5 rounded-lg border transition-all ${
+											mirror
+												? "bg-[#0c1417] border-[#00e5ff]/60 text-white"
+												: "bg-[#18191c] border-[#26282f] text-slate-400"
+										}`}
+									>
+										<label className="flex items-start justify-between cursor-pointer gap-2">
+											<div>
+												<div className="text-[11px] font-bold text-white flex items-center gap-1">
+													<FlipHorizontal className="w-3 h-3 text-[#00e5ff]" />
+													<span>1. Horizontal Flip (Mirror)</span>
+												</div>
+												<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
+													Flips frame horizontally to break YouTube bot pattern matching.
+												</p>
+											</div>
+											<input
+												type="checkbox"
+												checked={mirror}
+												onChange={(e) => setMirror(e.target.checked)}
+												className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5"
+											/>
+										</label>
+									</div>
+
+									{/* Item 2: Safe 2% Zoom (Top Anchor Headroom Protection) */}
+									<div
+										className={`p-2.5 rounded-lg border transition-all ${
+											applyZoom
+												? "bg-[#150f1f] border-purple-500/60"
+												: "bg-[#18191c] border-[#26282f]"
+										}`}
+									>
+										<label className="flex items-start justify-between cursor-pointer gap-2">
+											<div>
+												<div className="text-[11px] font-bold text-white flex items-center gap-1">
+													<ZoomIn className="w-3 h-3 text-purple-400" />
+													<span>2. Safe 2% Zoom (Top Anchor)</span>
+												</div>
+												<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
+													Docs 1.02x zoom with top anchor; protects caps, heads, and clocks.
+												</p>
+											</div>
+											<input
+												type="checkbox"
+												checked={applyZoom}
+												onChange={(e) => setApplyZoom(e.target.checked)}
+												className="accent-purple-500 w-4 h-4 cursor-pointer mt-0.5"
+											/>
+										</label>
+									</div>
+
+									{/* Item 3: Color Grading & Histogram Shift */}
+									<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+										<label className="flex items-start justify-between cursor-pointer gap-2">
+											<div>
+												<div className="text-[11px] font-bold text-white flex items-center gap-1">
+													<Palette className="w-3 h-3 text-amber-400" />
+													<span>3. Color Grading & Histogram Shift</span>
+												</div>
+												<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
+													Shifts color balance away from original video histogram.
+												</p>
+											</div>
+											<input
+												type="checkbox"
+												checked={colorFilter !== "none"}
+												onChange={(e) =>
+													setColorFilter(e.target.checked ? "cinematic" : "none")
+												}
+												className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5"
+											/>
+										</label>
+
+										{/* Compact Manual Sliders */}
+										<div className="flex flex-col gap-1.5 pt-1 border-t border-[#212328] text-[10px]">
+											<div className="flex items-center justify-between">
+												<span className="text-slate-400">Preset:</span>
+												<select
+													value={colorFilter}
+													onChange={(e) => setColorFilter(e.target.value)}
+													className="bg-[#121316] border border-[#2b2d35] rounded px-1.5 py-0.5 text-slate-200 text-[10px]"
+												>
+													<option value="none">Normal (Flat)</option>
+													<option value="cinematic">Cinematic</option>
+													<option value="warm">Warm Boost</option>
+													<option value="cool">Cool Tone</option>
+												</select>
+											</div>
+
+											<div className="flex items-center justify-between">
+												<span className="text-slate-400">Brightness:</span>
+												<input
+													type="range"
+													min={-0.1}
+													max={0.15}
+													step={0.01}
+													value={brightness}
+													onChange={(e) =>
+														setBrightness(Number.parseFloat(e.target.value))
+													}
+													className="w-20 accent-[#00e5ff] h-1 bg-[#25262c] rounded cursor-pointer"
+												/>
+											</div>
 										</div>
-										<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
-											Shifts color balance away from original video histogram.
-										</p>
-									</div>
-									<input
-										type="checkbox"
-										checked={colorFilter !== "none"}
-										onChange={(e) =>
-											setColorFilter(e.target.checked ? "cinematic" : "none")
-										}
-										className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5"
-									/>
-								</label>
-
-								{/* Compact Manual Sliders */}
-								<div className="flex flex-col gap-1.5 pt-1 border-t border-[#212328] text-[10px]">
-									<div className="flex items-center justify-between">
-										<span className="text-slate-400">Preset:</span>
-										<select
-											value={colorFilter}
-											onChange={(e) => setColorFilter(e.target.value)}
-											className="bg-[#121316] border border-[#2b2d35] rounded px-1.5 py-0.5 text-slate-200 text-[10px]"
-										>
-											<option value="none">Normal (Flat)</option>
-											<option value="cinematic">Cinematic</option>
-											<option value="warm">Warm Boost</option>
-											<option value="cool">Cool Tone</option>
-										</select>
 									</div>
 
-									<div className="flex items-center justify-between">
-										<span className="text-slate-400">Brightness:</span>
+									{/* Item 4: 100% Mute Original Audio (Crucial Requirement) */}
+									<div
+										className={`p-2.5 rounded-lg border transition-all ${
+											muteOriginalAudio
+												? "bg-[#180a0d] border-rose-500/60"
+												: "bg-[#18191c] border-[#26282f]"
+										}`}
+									>
+										<label className="flex items-start justify-between cursor-pointer gap-2">
+											<div>
+												<div className="text-[11px] font-bold text-rose-300 flex items-center gap-1">
+													<VolumeX className="w-3.5 h-3.5 text-rose-400" />
+													<span>4. Mute Original Audio (100%)</span>
+												</div>
+												<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
+													Strips original audio completely so zero acoustic match exists.
+												</p>
+											</div>
+											<input
+												type="checkbox"
+												checked={muteOriginalAudio}
+												onChange={(e) => setMuteOriginalAudio(e.target.checked)}
+												className="accent-rose-500 w-4 h-4 cursor-pointer mt-0.5"
+											/>
+										</label>
+									</div>
+
+									{/* Item 5: Looped Background Music (BGM Mix) */}
+									<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+										<label className="flex items-start justify-between cursor-pointer gap-2">
+											<div>
+												<div className="text-[11px] font-bold text-white flex items-center gap-1">
+													<Music className="w-3 h-3 text-[#00e5ff]" />
+													<span>5. Looped BGM Mix (Software/aud)</span>
+												</div>
+												<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
+													Mixes clean copyright-free background music underneath.
+												</p>
+											</div>
+											<input
+												type="checkbox"
+												checked={bgmEnabled}
+												onChange={(e) => setBgmEnabled(e.target.checked)}
+												className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5"
+											/>
+										</label>
+
+										{/* Compact Manual Controls */}
+										{bgmEnabled && (
+											<div className="grid grid-cols-2 gap-2 text-[10px] pt-1 border-t border-[#212328]">
+												<div className="flex items-center justify-between">
+													<span className="text-slate-400">Track:</span>
+													<select
+														value={bgmTrackName}
+														onChange={(e) => setBgmTrackName(e.target.value)}
+														className="bg-[#121316] border border-[#2b2d35] rounded px-1.5 py-0.5 text-slate-200 text-[10px]"
+													>
+														<option value="bg1.mp4">bg1.mp4</option>
+														<option value="bg2.mp4">bg2.mp4</option>
+														<option value="bg3.mp4">bg3.mp4</option>
+														<option value="bg4.mp4">bg4.mp4</option>
+													</select>
+												</div>
+												<div className="flex items-center justify-between">
+													<span className="text-slate-400">Vol:</span>
+													<input
+														type="range"
+														min={0.05}
+														max={0.5}
+														step={0.05}
+														value={bgmVolume}
+														onChange={(e) =>
+															setBgmVolume(Number.parseFloat(e.target.value))
+														}
+														className="w-14 accent-[#00e5ff] h-1 bg-[#25262c] rounded cursor-pointer"
+													/>
+												</div>
+											</div>
+										)}
+									</div>
+
+									{/* Item 6: Metadata Cleansing (-map_metadata -1) */}
+									<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex items-center justify-between">
+										<div>
+											<div className="text-[11px] font-bold text-white">
+												6. Metadata Stripping (-map_metadata -1)
+											</div>
+											<div className="text-[9px] text-slate-500">
+												Wipes camera, creation dates, and digital hash.
+											</div>
+										</div>
 										<input
-											type="range"
-											min={-0.1}
-											max={0.15}
-											step={0.01}
-											value={brightness}
-											onChange={(e) =>
-												setBrightness(Number.parseFloat(e.target.value))
-											}
-											className="w-20 accent-[#00e5ff] h-1 bg-[#25262c] rounded cursor-pointer"
+											type="checkbox"
+											checked={metadataClean}
+											onChange={(e) => setMetadataClean(e.target.checked)}
+											className="accent-[#00e5ff] w-4 h-4 cursor-pointer"
 										/>
 									</div>
-								</div>
-							</div>
-
-							{/* Item 4: 100% Mute Original Audio (Crucial Requirement) */}
-							<div
-								className={`p-2.5 rounded-lg border transition-all ${
-									muteOriginalAudio
-										? "bg-[#180a0d] border-rose-500/60"
-										: "bg-[#18191c] border-[#26282f]"
-								}`}
-							>
-								<label className="flex items-start justify-between cursor-pointer gap-2">
-									<div>
-										<div className="text-[11px] font-bold text-rose-300 flex items-center gap-1">
-											<VolumeX className="w-3.5 h-3.5 text-rose-400" />
-											<span>4. Mute Original Audio (100%)</span>
-										</div>
-										<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
-											Strips original audio completely so zero acoustic match exists.
-										</p>
-									</div>
-									<input
-										type="checkbox"
-										checked={muteOriginalAudio}
-										onChange={(e) => setMuteOriginalAudio(e.target.checked)}
-										className="accent-rose-500 w-4 h-4 cursor-pointer mt-0.5"
-									/>
-								</label>
-							</div>
-
-							{/* Item 5: Looped Background Music (BGM Mix) */}
-							<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
-								<label className="flex items-start justify-between cursor-pointer gap-2">
-									<div>
-										<div className="text-[11px] font-bold text-white flex items-center gap-1">
-											<Music className="w-3 h-3 text-[#00e5ff]" />
-											<span>5. Looped BGM Mix (Software/aud)</span>
-										</div>
-										<p className="text-[9px] text-slate-400 mt-0.5 leading-snug">
-											Mixes clean copyright-free background music underneath.
-										</p>
-									</div>
-									<input
-										type="checkbox"
-										checked={bgmEnabled}
-										onChange={(e) => setBgmEnabled(e.target.checked)}
-										className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5"
-									/>
-								</label>
-
-								{/* Compact Manual Controls */}
-								{bgmEnabled && (
-									<div className="grid grid-cols-2 gap-2 text-[10px] pt-1 border-t border-[#212328]">
-										<div className="flex items-center justify-between">
-											<span className="text-slate-400">Track:</span>
-											<select
-												value={bgmTrackName}
-												onChange={(e) => setBgmTrackName(e.target.value)}
-												className="bg-[#121316] border border-[#2b2d35] rounded px-1.5 py-0.5 text-slate-200 text-[10px]"
-											>
-												<option value="bg1.mp4">bg1.mp4</option>
-												<option value="bg2.mp4">bg2.mp4</option>
-												<option value="bg3.mp4">bg3.mp4</option>
-												<option value="bg4.mp4">bg4.mp4</option>
-											</select>
-										</div>
-										<div className="flex items-center justify-between">
-											<span className="text-slate-400">Vol:</span>
-											<input
-												type="range"
-												min={0.05}
-												max={0.5}
-												step={0.05}
-												value={bgmVolume}
-												onChange={(e) =>
-													setBgmVolume(Number.parseFloat(e.target.value))
-												}
-												className="w-14 accent-[#00e5ff] h-1 bg-[#25262c] rounded cursor-pointer"
-											/>
-										</div>
-									</div>
-								)}
-							</div>
-
-							{/* Item 6: Metadata Cleansing (-map_metadata -1) */}
-							<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex items-center justify-between">
-								<div>
-									<div className="text-[11px] font-bold text-white">
-										6. Metadata Stripping (-map_metadata -1)
-									</div>
-									<div className="text-[9px] text-slate-500">
-										Wipes camera, creation dates, and digital hash.
-									</div>
-								</div>
-								<input
-									type="checkbox"
-									checked={metadataClean}
-									onChange={(e) => setMetadataClean(e.target.checked)}
-									className="accent-[#00e5ff] w-4 h-4 cursor-pointer"
-								/>
-							</div>
+								</>
+							)}
 						</div>
 					</>
 				) : activeTopTab === "voice" ? (

@@ -17,6 +17,8 @@ export default function CapCutTopNav({
 	onExport,
 	isExporting = false,
 	hasVideo = false,
+	editMode = "auto",
+	setEditMode,
 }) {
 	return (
 		<div className="h-10 bg-[#121316] border-b border-[#212328] px-3 flex items-center justify-between text-xs text-slate-300 select-none">
@@ -57,9 +59,39 @@ export default function CapCutTopNav({
 				</div>
 			</div>
 
-			{/* Center: Project Title */}
-			<div className="text-[12px] font-semibold text-slate-200 tracking-wide">
-				{projectTitle}
+			{/* Center: Mode Switcher (Auto All OK vs Manual Show All) */}
+			<div className="flex items-center gap-2.5">
+				<div className="flex items-center bg-[#1a1b20] p-0.5 rounded-lg border border-[#2d2f37]">
+					<button
+						type="button"
+						onClick={() => setEditMode && setEditMode("auto")}
+						className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+							editMode === "auto"
+								? "bg-[#00e5ff] text-black font-extrabold shadow-sm"
+								: "text-slate-400 hover:text-white"
+						}`}
+						title="Auto Mode: All 8 anti-copyright safeguards enabled automatically"
+					>
+						<span>⚡ Auto (All OK)</span>
+					</button>
+
+					<button
+						type="button"
+						onClick={() => setEditMode && setEditMode("manual")}
+						className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+							editMode === "manual"
+								? "bg-[#282a32] text-[#00e5ff] border border-[#00e5ff]/50 shadow-sm"
+								: "text-slate-400 hover:text-white"
+						}`}
+						title="Manual Mode: Show all checklist cards, checkboxes & sliders"
+					>
+						<span>⚙️ Manual</span>
+					</button>
+				</div>
+
+				<span className="text-[12px] font-semibold text-slate-300 hidden md:inline ml-1 font-mono">
+					{projectTitle}
+				</span>
 			</div>
 
 			{/* Right: Layout, Shortcut, Cyan Export Button & Window Controls */}

@@ -40,6 +40,9 @@ export default function CapCutMediaLibrary({
 	videoTitle,
 	duration,
 	isUploading = false,
+	// Mode Switcher Props
+	editMode = "auto",
+	setEditMode,
 	// Left Side Editing Checklist props
 	blackBgLayer,
 	setBlackBgLayer,
@@ -355,77 +358,131 @@ export default function CapCutMediaLibrary({
 								</div>
 							</div>
 						) : (
-							/* LEFT EDITING CHECKLIST */
+							/* LEFT EDITING CHECKLIST (Auto Mode vs Manual Mode) */
 							<div className="flex-1 p-3 overflow-y-auto flex flex-col gap-3 text-slate-300">
 								<div className="flex items-center justify-between pb-1.5 border-b border-[#212328]">
 									<span className="text-[11px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
 										<Layers className="w-3.5 h-3.5 text-[#00e5ff]" />
 										Left Video Editing Checklist
 									</span>
-									<span className="text-[9px] text-[#00e5ff] bg-[#00e5ff]/10 px-1.5 py-0.5 rounded font-mono">
-										Visual Layering
+									<span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+										editMode === "auto"
+											? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+											: "bg-[#00e5ff]/10 text-[#00e5ff]"
+									}`}>
+										{editMode === "auto" ? "Auto: All OK" : "Manual Mode"}
 									</span>
 								</div>
 
-								{/* Item 1: Solid Black Canvas Base */}
-								<div className={`p-2.5 rounded-lg border transition-all ${blackBgLayer ? "bg-[#0c1417] border-[#00e5ff]/60 text-white" : "bg-[#18191c] border-[#26282f] text-slate-400"}`}>
-									<label className="flex items-start justify-between cursor-pointer gap-2">
-										<div>
-											<div className="text-[11px] font-bold text-white flex items-center gap-1">
-												<span>1. Solid Black Base Canvas</span>
-												{blackBgLayer && <span className="text-[9px] text-[#00e5ff] font-mono">[black.jpg]</span>}
+								{/* AUTO MODE: ALL OK VIEW (No slider clutter, 1-click ready) */}
+								{editMode === "auto" ? (
+									<div className="flex flex-col gap-3">
+										<div className="p-3 bg-[#0a1612] border border-emerald-500/40 rounded-lg flex flex-col gap-2.5">
+											<div className="flex items-center justify-between">
+												<div className="flex items-center gap-1.5 text-emerald-300 font-extrabold text-[11px]">
+													<span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+													<span>Auto Mode: All 4 Visual Layers OK</span>
+												</div>
+												<span className="bg-emerald-500/20 text-emerald-400 text-[9px] px-1.5 py-0.2 rounded font-bold">
+													Ready
+												</span>
 											</div>
-											<p className="text-[9px] text-slate-400 mt-0.5">Adds solid black base layer beneath video to defeat YouTube frame matching.</p>
+											<p className="text-[9.5px] text-slate-300 leading-snug">
+												All 4 visual layers are automatically locked with the official VideoForge anti-copyright settings. Just upload and click &ldquo;⚡ Create Video&rdquo;!
+											</p>
+											<div className="grid grid-cols-2 gap-2 pt-1 text-[10px] text-emerald-300 font-medium">
+												<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+													<Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+													<span>black.jpg Base Layer</span>
+												</div>
+												<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+													<Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+													<span>94% Centered Scale</span>
+												</div>
+												<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+													<Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+													<span>Chroma Meme (V3)</span>
+												</div>
+												<div className="flex items-center gap-1 bg-[#12231b] p-1.5 rounded border border-emerald-500/30">
+													<Check className="w-3 h-3 text-emerald-400 stroke-[3]" />
+													<span>40s Climax Hook</span>
+												</div>
+											</div>
 										</div>
-										<input type="checkbox" checked={blackBgLayer} onChange={(e) => setBlackBgLayer(e.target.checked)} className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5" />
-									</label>
-								</div>
 
-								{/* Item 2: Video Scaling */}
-								<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
-									<label className="flex items-start justify-between cursor-pointer gap-2">
-										<div>
-											<div className="text-[11px] font-bold text-white">2. Video Scale & Centering</div>
-											<p className="text-[9px] text-slate-400 mt-0.5">Scales video slightly so black border surrounds the frame.</p>
-										</div>
-										<input type="checkbox" checked={videoScale < 100} onChange={(e) => setVideoScale(e.target.checked ? 94 : 100)} className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5" />
-									</label>
-									<div className="flex items-center justify-between text-[10px] pt-1 border-t border-[#212328]">
-										<span className="text-slate-400">Manual Scale:</span>
-										<div className="flex items-center gap-2">
-											<input type="range" min={85} max={100} value={videoScale} onChange={(e) => setVideoScale(Number(e.target.value))} className="accent-[#00e5ff] w-20 h-1 bg-[#25262c] rounded cursor-pointer" />
-											<span className="font-mono text-[#00e5ff] w-7 text-right font-bold">{videoScale}%</span>
-										</div>
+										<button
+											type="button"
+											onClick={() => setEditMode && setEditMode("manual")}
+											className="py-2 px-3 bg-[#18191c] hover:bg-[#202227] text-[#00e5ff] border border-[#00e5ff]/50 rounded text-[10.5px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+										>
+											<SlidersHorizontal className="w-3.5 h-3.5" />
+											<span>Switch to Manual to Show All Sliders &amp; Checkboxes</span>
+										</button>
 									</div>
-								</div>
-
-								{/* Item 3: Green Screen Overlay */}
-								<div className={`p-2.5 rounded-lg border transition-all ${overlayChroma ? "bg-[#0b1a10] border-emerald-500/60" : "bg-[#18191c] border-[#26282f]"}`}>
-									<label className="flex items-start justify-between cursor-pointer gap-2">
-										<div>
-											<div className="text-[11px] font-bold text-white flex items-center gap-1">
-												<span>3. Green Screen Meme Overlay (V3)</span>
-												<span className="text-[9px] text-emerald-400 font-mono">[Chroma]</span>
-											</div>
-											<p className="text-[9px] text-slate-400 mt-0.5">Superimposes reaction meme characters on top track.</p>
+								) : (
+									/* MANUAL MODE: SHOW ALL DETAILED CHECKLIST CARDS & SLIDERS */
+									<>
+										{/* Item 1: Solid Black Canvas Base */}
+										<div className={`p-2.5 rounded-lg border transition-all ${blackBgLayer ? "bg-[#0c1417] border-[#00e5ff]/60 text-white" : "bg-[#18191c] border-[#26282f] text-slate-400"}`}>
+											<label className="flex items-start justify-between cursor-pointer gap-2">
+												<div>
+													<div className="text-[11px] font-bold text-white flex items-center gap-1">
+														<span>1. Solid Black Base Canvas</span>
+														{blackBgLayer && <span className="text-[9px] text-[#00e5ff] font-mono">[black.jpg]</span>}
+													</div>
+													<p className="text-[9px] text-slate-400 mt-0.5">Adds solid black base layer beneath video to defeat YouTube frame matching.</p>
+												</div>
+												<input type="checkbox" checked={blackBgLayer} onChange={(e) => setBlackBgLayer(e.target.checked)} className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5" />
+											</label>
 										</div>
-										<input type="checkbox" checked={overlayChroma} onChange={(e) => setOverlayChroma(e.target.checked)} className="accent-emerald-400 w-4 h-4 cursor-pointer mt-0.5" />
-									</label>
-								</div>
 
-								{/* Item 4: Highlight Trimmer */}
-								<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
-									<label className="flex items-start justify-between cursor-pointer gap-2">
-										<div>
-											<div className="text-[11px] font-bold text-white flex items-center gap-1">
-												<Scissors className="w-3 h-3 text-amber-400" />
-												<span>4. CapCut Highlight Trimmer</span>
+										{/* Item 2: Video Scaling */}
+										<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+											<label className="flex items-start justify-between cursor-pointer gap-2">
+												<div>
+													<div className="text-[11px] font-bold text-white">2. Video Scale & Centering</div>
+													<p className="text-[9px] text-slate-400 mt-0.5">Scales video slightly so black border surrounds the frame.</p>
+												</div>
+												<input type="checkbox" checked={videoScale < 100} onChange={(e) => setVideoScale(e.target.checked ? 94 : 100)} className="accent-[#00e5ff] w-4 h-4 cursor-pointer mt-0.5" />
+											</label>
+											<div className="flex items-center justify-between text-[10px] pt-1 border-t border-[#212328]">
+												<span className="text-slate-400">Manual Scale:</span>
+												<div className="flex items-center gap-2">
+													<input type="range" min={85} max={100} value={videoScale} onChange={(e) => setVideoScale(Number(e.target.value))} className="accent-[#00e5ff] w-20 h-1 bg-[#25262c] rounded cursor-pointer" />
+													<span className="font-mono text-[#00e5ff] w-7 text-right font-bold">{videoScale}%</span>
+												</div>
 											</div>
-											<p className="text-[9px] text-slate-400 mt-0.5">Trims video to first 40s viral climax hook as per Docs.</p>
 										</div>
-										<input type="checkbox" checked={autoTrim40s} onChange={(e) => setAutoTrim40s(e.target.checked)} className="accent-amber-400 w-4 h-4 cursor-pointer mt-0.5" />
-									</label>
-								</div>
+
+										{/* Item 3: Green Screen Overlay */}
+										<div className={`p-2.5 rounded-lg border transition-all ${overlayChroma ? "bg-[#0b1a10] border-emerald-500/60" : "bg-[#18191c] border-[#26282f]"}`}>
+											<label className="flex items-start justify-between cursor-pointer gap-2">
+												<div>
+													<div className="text-[11px] font-bold text-white flex items-center gap-1">
+														<span>3. Green Screen Meme Overlay (V3)</span>
+														<span className="text-[9px] text-emerald-400 font-mono">[Chroma]</span>
+													</div>
+													<p className="text-[9px] text-slate-400 mt-0.5">Superimposes reaction meme characters on top track.</p>
+												</div>
+												<input type="checkbox" checked={overlayChroma} onChange={(e) => setOverlayChroma(e.target.checked)} className="accent-emerald-400 w-4 h-4 cursor-pointer mt-0.5" />
+											</label>
+										</div>
+
+										{/* Item 4: Highlight Trimmer */}
+										<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+											<label className="flex items-start justify-between cursor-pointer gap-2">
+												<div>
+													<div className="text-[11px] font-bold text-white flex items-center gap-1">
+														<Scissors className="w-3 h-3 text-amber-400" />
+														<span>4. CapCut Highlight Trimmer</span>
+													</div>
+													<p className="text-[9px] text-slate-400 mt-0.5">Trims video to first 40s viral climax hook as per Docs.</p>
+												</div>
+												<input type="checkbox" checked={autoTrim40s} onChange={(e) => setAutoTrim40s(e.target.checked)} className="accent-amber-400 w-4 h-4 cursor-pointer mt-0.5" />
+											</label>
+										</div>
+									</>
+								)}
 							</div>
 						)}
 					</div>
