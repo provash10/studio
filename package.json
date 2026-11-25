@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:exe": "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe /target:winexe /out:Studio.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll src\\launcher\\StudioLauncher.cs",
     "start": "next start",
     "lint": "biome lint ./src",
     "format": "biome format --write"
