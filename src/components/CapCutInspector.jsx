@@ -283,14 +283,28 @@ export default function CapCutInspector({
 								</div>
 							</div>
 
-							<button
-								type="button"
-								onClick={() => setEditMode && setEditMode("manual")}
-								className="mt-1 py-2 px-3 bg-[#18191c] hover:bg-[#202227] text-[#00e5ff] border border-[#00e5ff]/50 rounded-lg text-[11px] font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow"
-							>
-								<Sliders className="w-3.5 h-3.5" />
-								<span>⚙️ ম্যানুয়ালি টিক বা অ্যাডজাস্ট করতে Switch করুন</span>
-							</button>
+							<div className="flex flex-col gap-2 pt-1">
+								<button
+									type="button"
+									onClick={() => {
+										setEditMode && setEditMode("manual");
+										setActiveTopTab("voice");
+									}}
+									className="py-2 px-3 bg-[#101b22] hover:bg-[#162530] text-[#00e5ff] border border-[#00e5ff]/50 rounded-lg text-[11px] font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow"
+								>
+									<Bot className="w-3.5 h-3.5 text-[#00e5ff]" />
+									<span>🎙️ নিজের স্ক্রিপ্ট লিখতে বা ElevenLabs API Key দিতে এখানে ক্লিক করুন</span>
+								</button>
+
+								<button
+									type="button"
+									onClick={() => setEditMode && setEditMode("manual")}
+									className="py-1.5 px-3 bg-[#18191c] hover:bg-[#202227] text-slate-300 border border-[#2b2d35] rounded-lg text-[10.5px] font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+								>
+									<Sliders className="w-3.5 h-3.5" />
+									<span>⚙️ ম্যানুয়ালি চেকলিস্ট টিক বা অ্যাডজাস্ট করতে Switch করুন</span>
+								</button>
+							</div>
 						</div>
 					</div>
 				) : activeTopTab === "video" ? (
