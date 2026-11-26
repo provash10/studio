@@ -31,6 +31,10 @@ import {
 	Smile,
 	Flame,
 	Bell,
+	Save,
+	Trash2,
+	Move,
+	BookmarkPlus,
 } from "lucide-react";
 
 export default function CapCutMediaLibrary({
@@ -77,6 +81,8 @@ export default function CapCutMediaLibrary({
 	setTextOverlay,
 	showTextOverlay,
 	setShowTextOverlay,
+	textPosition = { x: 50, y: 12 },
+	setTextPosition,
 	stickerOverlay,
 	setStickerOverlay,
 	showStickerOverlay,
@@ -100,6 +106,46 @@ export default function CapCutMediaLibrary({
 }) {
 	const [activeSubTab, setActiveSubTab] = useState("media"); // 'media' or 'checklist'
 	const [playingAudioPreview, setPlayingAudioPreview] = useState(null);
+	const [savedCustomPresets, setSavedCustomPresets] = useState([]);
+	const [presetSavedToast, setPresetSavedToast] = useState(false);
+
+	// Load custom text presets from localStorage on mount
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			try {
+				const saved = localStorage.getItem("studio_custom_text_presets");
+				if (saved) {
+					const parsed = JSON.parse(saved);
+					if (Array.isArray(parsed)) setSavedCustomPresets(parsed);
+				}
+			} catch (e) {
+				console.warn("Could not load custom text presets:", e);
+			}
+		}
+	}, []);
+
+	const handleSaveCurrentText = () => {
+		const trimmed = (textOverlay || "").trim();
+		if (!trimmed) return;
+		if (!savedCustomPresets.includes(trimmed)) {
+			const updated = [trimmed, ...savedCustomPresets];
+			setSavedCustomPresets(updated);
+			if (typeof window !== "undefined") {
+				localStorage.setItem("studio_custom_text_presets", JSON.stringify(updated));
+			}
+		}
+		setPresetSavedToast(true);
+		setTimeout(() => setPresetSavedToast(false), 2000);
+	};
+
+	const handleDeleteCustomPreset = (indexToDelete, e) => {
+		if (e) e.stopPropagation();
+		const updated = savedCustomPresets.filter((_, idx) => idx !== indexToDelete);
+		setSavedCustomPresets(updated);
+		if (typeof window !== "undefined") {
+			localStorage.setItem("studio_custom_text_presets", JSON.stringify(updated));
+		}
+	};
 
 	// Automatically sync tab with editMode
 	useEffect(() => {
@@ -617,35 +663,102 @@ export default function CapCutMediaLibrary({
 							<Type className="w-3.5 h-3.5 text-[#00e5ff]" />
 							Text Overlays & Captions
 						</span>
-						<label className="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer">
+						<label className="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer">
 							<span>Show on Video:</span>
 							<input
 								type="checkbox"
 								checked={showTextOverlay}
 								onChange={(e) => setShowTextOverlay(e.target.checked)}
-								className="accent-[#00e5ff] w-3.5 h-3.5"
+								className="accent-[#00e5ff] w-3.5 h-3.5 cursor-pointer"
 							/>
 						</label>
 					</div>
 
-					{/* Custom Text Input */}
+					{/* Custom Text Input & Save Button */}
 					<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
-						<span className="text-[10.5px] font-bold text-white">Custom Banner Text</span>
-						<input
-							type="text"
-							value={textOverlay}
-							onChange={(e) => {
-								setTextOverlay(e.target.value);
-								setShowTextOverlay(true);
-							}}
-							placeholder="Type overlay text here..."
-							className="w-full bg-[#121316] border border-[#2b2d35] rounded p-2 text-white text-[11px] focus:outline-none focus:border-[#00e5ff] font-bold"
-						/>
+						<div className="flex items-center justify-between">
+							<span className="text-[10.5px] font-bold text-white">Custom Banner Text</span>
+							{presetSavedToast && (
+								<span className="text-[9.5px] text-[#00e5ff] font-bold flex items-center gap-1 animate-in fade-in">
+									<Check className="w-3 h-3" /> Saved!
+								</span>
+							)}
+						</div>
+						<div className="flex items-center gap-2">
+							<input
+								type="text"
+								value={textOverlay}
+								onChange={(e) => {
+									setTextOverlay(e.target.value);
+									setShowTextOverlay(true);
+								}}
+								placeholder="Type custom text (e.g. শেষ পর্যন্ত দেখুন... 🔥)"
+								className="flex-1 bg-[#121316] border border-[#2b2d35] rounded p-2 text-white text-[11px] focus:outline-none focus:border-[#00e5ff] font-bold"
+							/>
+							<button
+								type="button"
+								onClick={handleSaveCurrentText}
+								className="px-3 py-2 bg-[#00e5ff] hover:bg-[#33ebff] text-black font-extrabold text-[11px] rounded flex items-center gap-1 shrink-0 transition-all cursor-pointer shadow hover:scale-105"
+								title="Save this text to your custom saved presets"
+							>
+								<Save className="w-3.5 h-3.5" />
+								<span>Save</span>
+							</button>
+						</div>
+					</div>
+
+					{/* My Saved Presets Section */}
+					<div className="flex flex-col gap-2">
+						<div className="flex items-center justify-between">
+							<span className="text-[10.5px] font-bold text-[#00e5ff] flex items-center gap-1.5">
+								<BookmarkPlus className="w-3.5 h-3.5 text-[#00e5ff]" />
+								আমার সেভ করা টেক্সট ({savedCustomPresets.length})
+							</span>
+							<span className="text-[9px] text-slate-500 font-mono">
+								Saved in browser
+							</span>
+						</div>
+
+						{savedCustomPresets.length === 0 ? (
+							<div className="p-3 rounded-lg border border-dashed border-[#2b2d35] bg-[#121316] text-center text-slate-500 text-[10px]">
+								ওপরে যেকোনো টেক্সট লিখে <strong className="text-[#00e5ff]">Save</strong> বাটনে চাপলে এখানে স্থায়ীভাবে সেভ হয়ে থাকবে।
+							</div>
+						) : (
+							<div className="grid grid-cols-1 gap-1.5">
+								{savedCustomPresets.map((preset, idx) => (
+									<div
+										key={idx}
+										onClick={() => {
+											setTextOverlay(preset);
+											setShowTextOverlay(true);
+										}}
+										className={`group flex items-center justify-between p-2 rounded-lg border text-[10.5px] font-bold transition-all cursor-pointer ${
+											textOverlay === preset && showTextOverlay
+												? "bg-[#0b1b1f] border-[#00e5ff] text-yellow-300 shadow-md shadow-cyan-950/40"
+												: "bg-[#18191c] border-[#26282f] text-slate-200 hover:border-slate-500 hover:bg-[#1e2026]"
+										}`}
+									>
+										<div className="flex items-center gap-2 truncate">
+											<span className="text-[#00e5ff] text-xs">★</span>
+											<span className="truncate">{preset}</span>
+										</div>
+										<button
+											type="button"
+											onClick={(e) => handleDeleteCustomPreset(idx, e)}
+											className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity rounded"
+											title="Delete from saved presets"
+										>
+											<Trash2 className="w-3.5 h-3.5" />
+										</button>
+									</div>
+								))}
+							</div>
+						)}
 					</div>
 
 					{/* 1-Click Viral Hook Presets */}
 					<div className="flex flex-col gap-2">
-						<span className="text-[10.5px] font-bold text-slate-300">Viral Hook Presets (1-Click)</span>
+						<span className="text-[10.5px] font-bold text-slate-300">Viral Hook Presets (Default 1-Click)</span>
 						<div className="grid grid-cols-2 gap-2">
 							{textPresets.map((preset) => (
 								<button
@@ -655,9 +768,9 @@ export default function CapCutMediaLibrary({
 										setTextOverlay(preset);
 										setShowTextOverlay(true);
 									}}
-									className={`p-2 rounded border text-[10px] font-bold text-left transition-all cursor-pointer ${
+									className={`p-2 rounded border text-[10px] font-bold text-left transition-all cursor-pointer truncate ${
 										textOverlay === preset && showTextOverlay
-											? "bg-[#0c1417] border-[#00e5ff] text-yellow-300"
+											? "bg-[#0c1417] border-[#00e5ff] text-yellow-300 shadow-sm"
 											: "bg-[#18191c] border-[#26282f] text-slate-300 hover:text-white hover:border-slate-500"
 									}`}
 								>
@@ -665,6 +778,60 @@ export default function CapCutMediaLibrary({
 								</button>
 							))}
 						</div>
+					</div>
+
+					{/* Position & Placement Controls */}
+					<div className="p-2.5 rounded-lg border bg-[#141518] border-[#26282f] flex flex-col gap-2">
+						<div className="flex items-center justify-between text-[10.5px] font-bold text-white">
+							<div className="flex items-center gap-1.5">
+								<Move className="w-3.5 h-3.5 text-[#00e5ff]" />
+								<span>পজিশন অ্যাডজাস্ট (Placement)</span>
+							</div>
+							<span className="font-mono text-[#00e5ff] text-[9.5px] bg-[#1a1b20] px-1.5 py-0.5 rounded border border-[#2b2d35]">
+								X: {textPosition?.x ?? 50}% | Y: {textPosition?.y ?? 12}%
+							</span>
+						</div>
+
+						{/* Quick Placement Preset Buttons */}
+						<div className="grid grid-cols-3 gap-1.5">
+							<button
+								type="button"
+								onClick={() => setTextPosition && setTextPosition({ x: 50, y: 12 })}
+								className={`py-1 px-1.5 rounded text-[10px] font-bold transition-all border cursor-pointer ${
+									textPosition?.y <= 20
+										? "bg-[#1a2d33] border-[#00e5ff] text-[#00e5ff]"
+										: "bg-[#1f2025] border-[#2b2d35] text-slate-300 hover:text-white"
+								}`}
+							>
+								⬆ Top (12%)
+							</button>
+							<button
+								type="button"
+								onClick={() => setTextPosition && setTextPosition({ x: 50, y: 50 })}
+								className={`py-1 px-1.5 rounded text-[10px] font-bold transition-all border cursor-pointer ${
+									textPosition?.y > 20 && textPosition?.y < 70
+										? "bg-[#1a2d33] border-[#00e5ff] text-[#00e5ff]"
+										: "bg-[#1f2025] border-[#2b2d35] text-slate-300 hover:text-white"
+								}`}
+							>
+								⏺ Center (50%)
+							</button>
+							<button
+								type="button"
+								onClick={() => setTextPosition && setTextPosition({ x: 50, y: 85 })}
+								className={`py-1 px-1.5 rounded text-[10px] font-bold transition-all border cursor-pointer ${
+									textPosition?.y >= 70
+										? "bg-[#1a2d33] border-[#00e5ff] text-[#00e5ff]"
+										: "bg-[#1f2025] border-[#2b2d35] text-slate-300 hover:text-white"
+								}`}
+							>
+								⬇ Bottom (85%)
+							</button>
+						</div>
+
+						<p className="text-[9.5px] text-slate-400 leading-normal pt-0.5">
+							💡 <strong>টিপ:</strong> প্লেয়ারের স্ক্রিনে হলুদ টেক্সটটির ওপর মাউস দিয়ে চেপে ধরে ড্র্যাগ (Drag) করে আপনার ইচ্ছেমতো যেকোনো স্থানে টেনে বসাতে পারবেন।
+						</p>
 					</div>
 				</div>
 			)}

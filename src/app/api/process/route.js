@@ -35,6 +35,10 @@ export async function POST(request) {
 			voiceoverEnabled = false,
 			voiceoverFileName = null,
 			voiceoverVolume = 1.2,
+			// Text Overlay Props
+			textOverlay = "",
+			showTextOverlay = false,
+			textPosition = { x: 50, y: 12 },
 		} = data;
 
 		if (!filename) {
@@ -224,6 +228,25 @@ export async function POST(request) {
 		if (effectiveSpeed !== 1.0) {
 			filters.push(`${baseV}setpts=PTS/${effectiveSpeed.toFixed(3)}[vpts]`);
 			baseV = "[vpts]";
+		}
+
+		// 6.5 Draw Text Overlay (Draggable Hook with Black Box & Yellow Text)
+		if (showTextOverlay && textOverlay) {
+			const posX = Math.max(5, Math.min(95, Number(textPosition?.x ?? 50)));
+			const posY = Math.max(5, Math.min(95, Number(textPosition?.y ?? 12)));
+			const fontSize = Math.max(24, Math.round(tH * 0.04));
+
+			// Clean special characters for FFmpeg drawtext
+			const safeText = String(textOverlay)
+				.replace(/\\/g, "\\\\")
+				.replace(/'/g, "'\\''")
+				.replace(/:/g, "\\:")
+				.replace(/%/g, "\\%");
+
+			filters.push(
+				`${baseV}drawtext=text='${safeText}':fontcolor=yellow:fontsize=${fontSize}:box=1:boxcolor=black@0.85:boxborderw=12:x='(w-text_w)*(${posX}/100)':y='(h-text_h)*(${posY}/100)'[vtext]`,
+			);
+			baseV = "[vtext]";
 		}
 
 		// Calculate target duration adjusted for video speed so FFmpeg never loops indefinitely

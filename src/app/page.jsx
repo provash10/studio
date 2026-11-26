@@ -68,6 +68,7 @@ export default function CapCutStudio() {
 	// Text & Sticker Overlays
 	const [textOverlay, setTextOverlay] = useState("WAIT FOR IT... 🔥");
 	const [showTextOverlay, setShowTextOverlay] = useState(false);
+	const [textPosition, setTextPosition] = useState({ x: 50, y: 12 }); // {x: %, y: %}
 	const [stickerOverlay, setStickerOverlay] = useState("🧸");
 	const [showStickerOverlay, setShowStickerOverlay] = useState(false);
 	const [activeTransition, setActiveTransition] = useState("crossfade");
@@ -267,6 +268,10 @@ export default function CapCutStudio() {
 					voiceoverEnabled: Boolean(currentVoice),
 					voiceoverFileName: currentVoice,
 					voiceoverVolume: 1.25,
+					// Text Overlay
+					textOverlay,
+					showTextOverlay,
+					textPosition,
 				}),
 			});
 
@@ -396,6 +401,8 @@ export default function CapCutStudio() {
 						setTextOverlay={setTextOverlay}
 						showTextOverlay={showTextOverlay}
 						setShowTextOverlay={setShowTextOverlay}
+						textPosition={textPosition}
+						setTextPosition={setTextPosition}
 						stickerOverlay={stickerOverlay}
 						setStickerOverlay={setStickerOverlay}
 						showStickerOverlay={showStickerOverlay}
@@ -436,6 +443,8 @@ export default function CapCutStudio() {
 						videoScale={videoScale}
 						textOverlay={textOverlay}
 						showTextOverlay={showTextOverlay}
+						textPosition={textPosition}
+						setTextPosition={setTextPosition}
 						stickerOverlay={stickerOverlay}
 						showStickerOverlay={showStickerOverlay}
 						currentTime={currentTime}

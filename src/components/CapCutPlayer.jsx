@@ -33,6 +33,8 @@ export default function CapCutPlayer({
 	videoScale = 94,
 	textOverlay = "",
 	showTextOverlay = false,
+	textPosition = { x: 50, y: 12 },
+	setTextPosition,
 	stickerOverlay = "",
 	showStickerOverlay = false,
 	currentTime = 0,
@@ -50,8 +52,59 @@ export default function CapCutPlayer({
 	onExport,
 }) {
 	const videoRef = useRef(null);
+	const canvasRef = useRef(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [previewToast, setPreviewToast] = useState(false);
+	const [isDraggingText, setIsDraggingText] = useState(false);
+
+	// Drag event handlers for positioning text overlay
+	const handleTextMouseDown = (e) => {
+		e.stopPropagation();
+		e.preventDefault();
+		setIsDraggingText(true);
+	};
+
+	const handleTextTouchStart = (e) => {
+		e.stopPropagation();
+		setIsDraggingText(true);
+	};
+
+	useEffect(() => {
+		if (!isDraggingText) return;
+
+		const handleMouseMove = (e) => {
+			if (!canvasRef.current || !setTextPosition) return;
+			const rect = canvasRef.current.getBoundingClientRect();
+			const xPct = Math.max(5, Math.min(95, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+			const yPct = Math.max(5, Math.min(95, Math.round(((e.clientY - rect.top) / rect.height) * 100)));
+			setTextPosition({ x: xPct, y: yPct });
+		};
+
+		const handleTouchMove = (e) => {
+			if (!canvasRef.current || !setTextPosition || !e.touches[0]) return;
+			const rect = canvasRef.current.getBoundingClientRect();
+			const touch = e.touches[0];
+			const xPct = Math.max(5, Math.min(95, Math.round(((touch.clientX - rect.left) / rect.width) * 100)));
+			const yPct = Math.max(5, Math.min(95, Math.round(((touch.clientY - rect.top) / rect.height) * 100)));
+			setTextPosition({ x: xPct, y: yPct });
+		};
+
+		const handleEnd = () => {
+			setIsDraggingText(false);
+		};
+
+		window.addEventListener("mousemove", handleMouseMove);
+		window.addEventListener("mouseup", handleEnd);
+		window.addEventListener("touchmove", handleTouchMove);
+		window.addEventListener("touchend", handleEnd);
+
+		return () => {
+			window.removeEventListener("mousemove", handleMouseMove);
+			window.removeEventListener("mouseup", handleEnd);
+			window.removeEventListener("touchmove", handleTouchMove);
+			window.removeEventListener("touchend", handleEnd);
+		};
+	}, [isDraggingText, setTextPosition]);
 
 	useEffect(() => {
 		if (videoRef.current && seekTime !== null) {
@@ -214,6 +267,7 @@ export default function CapCutPlayer({
 			{/* Center Viewport */}
 			<div className="flex-1 relative flex items-center justify-center p-2 bg-[#0c0d10] overflow-hidden">
 				<div
+					ref={canvasRef}
 					className="relative bg-black flex items-center justify-center shadow-2xl transition-all duration-200 border border-[#232429] mx-auto overflow-hidden"
 					style={{
 						aspectRatio:
@@ -313,10 +367,31 @@ export default function CapCutPlayer({
 						</div>
 					)}
 
-					{/* Text Overlay (Hook / Captions) */}
+					{/* Text Overlay (Hook / Captions) - 100% Freely Draggable & Positioned */}
 					{showTextOverlay && textOverlay && !isCopyrightFreeActive && (
-						<div className="absolute top-10 left-1/2 -translate-x-1/2 z-20 pointer-events-none px-3 py-1 bg-black/80 rounded border-2 border-yellow-400 text-yellow-300 font-extrabold text-xs sm:text-sm tracking-wide text-center uppercase shadow-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] max-w-[90%]">
-							{textOverlay}
+						<div
+							onMouseDown={handleTextMouseDown}
+							onTouchStart={handleTextTouchStart}
+							style={{
+								position: "absolute",
+								left: `${textPosition?.x ?? 50}%`,
+								top: `${textPosition?.y ?? 12}%`,
+								transform: "translate(-50%, -50%)",
+							}}
+							className={`z-30 select-none px-3.5 py-1.5 bg-black/85 rounded-md border-2 border-yellow-400 text-yellow-300 font-extrabold text-xs sm:text-sm tracking-wide text-center uppercase shadow-2xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] max-w-[90%] transition-shadow cursor-grab active:cursor-grabbing group hover:border-[#00e5ff] hover:shadow-[0_0_15px_rgba(0,229,255,0.5)] ${
+								isDraggingText ? "cursor-grabbing border-[#00e5ff] scale-105 shadow-[0_0_20px_rgba(0,229,255,0.7)] ring-2 ring-[#00e5ff]" : ""
+							}`}
+							title="মাউস দিয়ে চেপে ধরে ড্র্যাগ করে পজিশন পরিবর্তন করুন"
+						>
+							<div className="flex items-center gap-1.5 pointer-events-none">
+								<span className="text-[10px] text-[#00e5ff] opacity-80 font-mono">✥</span>
+								<span>{textOverlay}</span>
+							</div>
+
+							{/* Coordinate pill tooltip */}
+							<div className="absolute -bottom-5 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 text-[#00e5ff] text-[9px] font-mono px-1.5 py-0.5 rounded border border-[#00e5ff]/40 whitespace-nowrap shadow-md">
+								X: {textPosition?.x ?? 50}% | Y: {textPosition?.y ?? 12}% (Drag to move)
+							</div>
 						</div>
 					)}
 
