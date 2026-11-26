@@ -100,7 +100,6 @@ export default function CapCutTopNav({
 						onChange={(e) => {
 							const val = e.target.value;
 							if (setAspectRatio) setAspectRatio(val);
-							if (setVideoType) setVideoType(val === "9:16" ? "shorts" : "long");
 						}}
 						className="bg-[#202228] hover:bg-[#282a32] text-[#00e5ff] font-bold text-[11px] rounded-md px-2.5 py-1 border border-[#353742] focus:outline-none cursor-pointer transition-all shadow-sm"
 						title="Select Aspect Ratio"

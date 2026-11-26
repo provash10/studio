@@ -214,19 +214,36 @@ export default function CapCutPlayer({
 			{/* Center Viewport */}
 			<div className="flex-1 relative flex items-center justify-center p-2 bg-[#0c0d10] overflow-hidden">
 				<div
-					className={`relative bg-black flex items-center justify-center shadow-2xl transition-all duration-150 border border-[#232429] ${
-						aspectRatio === "9:16"
-							? "h-full max-h-[380px] aspect-[9/16]"
-							: aspectRatio === "1:1"
-							? "h-full max-h-[380px] aspect-square"
-							: aspectRatio === "4:3"
-							? "h-full max-h-[380px] aspect-[4/3]"
-							: aspectRatio === "3:4"
-							? "h-full max-h-[380px] aspect-[3/4]"
-							: aspectRatio === "21:9"
-							? "w-full max-w-[620px] aspect-[21/9]"
-							: "w-full max-w-[620px] aspect-[16/9]"
-					}`}
+					className="relative bg-black flex items-center justify-center shadow-2xl transition-all duration-200 border border-[#232429] mx-auto overflow-hidden"
+					style={{
+						aspectRatio:
+							aspectRatio === "9:16"
+								? "9 / 16"
+								: aspectRatio === "1:1"
+								? "1 / 1"
+								: aspectRatio === "4:3"
+								? "4 / 3"
+								: aspectRatio === "3:4"
+								? "3 / 4"
+								: aspectRatio === "21:9"
+								? "21 / 9"
+								: "16 / 9",
+						height: "100%",
+						maxHeight: "380px",
+						maxWidth:
+							aspectRatio === "21:9"
+								? "660px"
+								: aspectRatio === "16:9"
+								? "620px"
+								: aspectRatio === "4:3"
+								? "506px"
+								: aspectRatio === "1:1"
+								? "380px"
+								: aspectRatio === "3:4"
+								? "285px"
+								: "214px",
+						width: "100%",
+					}}
 				>
 					{/* The Solid Black Base Layer (black.jpg) */}
 					{blackBgLayer && !isCopyrightFreeActive && (

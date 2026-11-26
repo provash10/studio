@@ -18,17 +18,29 @@ export default function CapCutStudio() {
 	const [seekTime, setSeekTime] = useState(null);
 	const [isUploading, setIsUploading] = useState(false);
 
-	// Video Format Type (Shorts vs Long Video)
-	const [videoType, setVideoType] = useState("shorts"); // 'shorts' (9:16) or 'long' (16:9)
+	// Video Format Type & Aspect Ratio
+	const [videoType, setVideoType] = useState("shorts"); // 'shorts' or 'long'
 	const [aspectRatio, setAspectRatio] = useState("9:16");
 	const [resolution, setResolution] = useState("1080p");
+
+	// Unified Aspect Ratio change handler - preserves ANY selected ratio (9:16, 16:9, 1:1, 4:3, 3:4, 21:9)
+	const handleAspectRatioChange = (ratio) => {
+		setAspectRatio(ratio);
+		if (ratio === "9:16" || ratio === "3:4") {
+			setVideoType("shorts");
+		} else {
+			setVideoType("long");
+		}
+	};
 
 	const handleVideoTypeChange = (type) => {
 		setVideoType(type);
 		if (type === "shorts") {
 			setAspectRatio("9:16");
 		} else {
-			setAspectRatio("16:9");
+			if (aspectRatio === "9:16" || aspectRatio === "3:4") {
+				setAspectRatio("16:9");
+			}
 		}
 	};
 
@@ -335,7 +347,7 @@ export default function CapCutStudio() {
 				editMode={editMode}
 				setEditMode={handleSetEditMode}
 				aspectRatio={aspectRatio}
-				setAspectRatio={setAspectRatio}
+				setAspectRatio={handleAspectRatioChange}
 				videoType={videoType}
 				setVideoType={handleVideoTypeChange}
 			/>
@@ -412,7 +424,7 @@ export default function CapCutStudio() {
 					<CapCutPlayer
 						videoUrl={videoUrl}
 						aspectRatio={aspectRatio}
-						setAspectRatio={setAspectRatio}
+						setAspectRatio={handleAspectRatioChange}
 						mirror={mirror}
 						blackBgLayer={blackBgLayer}
 						applyZoom={applyZoom}
