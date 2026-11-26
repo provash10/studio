@@ -39,10 +39,12 @@ export async function POST(request) {
 			textOverlay = "",
 			showTextOverlay = false,
 			textPosition = { x: 50, y: 12 },
+			textScale = 1.0,
 			// Sticker Overlay Props
 			stickerOverlay = "",
 			showStickerOverlay = false,
 			stickerPosition = { x: 85, y: 85 },
+			stickerScale = 1.0,
 		} = data;
 
 		if (!filename) {
@@ -251,7 +253,8 @@ export async function POST(request) {
 		if (showTextOverlay && textOverlay) {
 			const posX = Math.max(5, Math.min(95, Number(textPosition?.x ?? 50)));
 			const posY = Math.max(5, Math.min(95, Number(textPosition?.y ?? 12)));
-			const fontSize = Math.max(24, Math.round(tH * 0.04));
+			const tScale = Math.max(0.5, Math.min(3.0, Number(textScale) || 1.0));
+			const fontSize = Math.max(16, Math.round(tH * 0.04 * tScale));
 
 			// Clean special characters for FFmpeg drawtext
 			const safeText = String(textOverlay)
@@ -261,7 +264,7 @@ export async function POST(request) {
 				.replace(/%/g, "\\%");
 
 			filters.push(
-				`${baseV}drawtext=text='${safeText}':fontcolor=yellow:fontsize=${fontSize}:box=1:boxcolor=black@0.85:boxborderw=12:x='(w-text_w)*(${posX}/100)':y='(h-text_h)*(${posY}/100)'[vtext]`,
+				`${baseV}drawtext=text='${safeText}':fontcolor=yellow:fontsize=${fontSize}:box=1:boxcolor=black@0.85:boxborderw=${Math.round(12 * tScale)}:x='(w-text_w)*(${posX}/100)':y='(h-text_h)*(${posY}/100)'[vtext]`,
 			);
 			baseV = "[vtext]";
 		}
@@ -270,7 +273,8 @@ export async function POST(request) {
 		if (showStickerOverlay && stickerOverlay) {
 			const sPosX = Math.max(5, Math.min(95, Number(stickerPosition?.x ?? 85)));
 			const sPosY = Math.max(5, Math.min(95, Number(stickerPosition?.y ?? 85)));
-			const sSize = Math.max(32, Math.round(tH * 0.055));
+			const stScale = Math.max(0.5, Math.min(3.0, Number(stickerScale) || 1.0));
+			const sSize = Math.max(20, Math.round(tH * 0.055 * stScale));
 
 			const safeSticker = String(stickerOverlay)
 				.replace(/\\/g, "\\\\")

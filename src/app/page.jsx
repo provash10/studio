@@ -69,9 +69,11 @@ export default function CapCutStudio() {
 	const [textOverlay, setTextOverlay] = useState("WAIT FOR IT... 🔥");
 	const [showTextOverlay, setShowTextOverlay] = useState(false);
 	const [textPosition, setTextPosition] = useState({ x: 50, y: 12 }); // {x: %, y: %}
+	const [textScale, setTextScale] = useState(1.0); // 0.6x to 2.2x
 	const [stickerOverlay, setStickerOverlay] = useState("🧸");
 	const [showStickerOverlay, setShowStickerOverlay] = useState(false);
 	const [stickerPosition, setStickerPosition] = useState({ x: 85, y: 85 }); // {x: %, y: %}
+	const [stickerScale, setStickerScale] = useState(1.0); // 0.6x to 2.5x
 	const [activeTransition, setActiveTransition] = useState("crossfade");
 	const [activeTopTab, setActiveTopTab] = useState("media");
 
@@ -273,10 +275,12 @@ export default function CapCutStudio() {
 					textOverlay,
 					showTextOverlay,
 					textPosition,
+					textScale,
 					// Sticker Overlay
 					stickerOverlay,
 					showStickerOverlay,
 					stickerPosition,
+					stickerScale,
 				}),
 			});
 
@@ -408,12 +412,16 @@ export default function CapCutStudio() {
 						setShowTextOverlay={setShowTextOverlay}
 						textPosition={textPosition}
 						setTextPosition={setTextPosition}
+						textScale={textScale}
+						setTextScale={setTextScale}
 						stickerOverlay={stickerOverlay}
 						setStickerOverlay={setStickerOverlay}
 						showStickerOverlay={showStickerOverlay}
 						setShowStickerOverlay={setShowStickerOverlay}
 						stickerPosition={stickerPosition}
 						setStickerPosition={setStickerPosition}
+						stickerScale={stickerScale}
+						setStickerScale={setStickerScale}
 						// Effects & Transitions
 						applyZoom={applyZoom}
 						setApplyZoom={setApplyZoom}
@@ -452,10 +460,14 @@ export default function CapCutStudio() {
 						showTextOverlay={showTextOverlay}
 						textPosition={textPosition}
 						setTextPosition={setTextPosition}
+						textScale={textScale}
+						setTextScale={setTextScale}
 						stickerOverlay={stickerOverlay}
 						showStickerOverlay={showStickerOverlay}
 						stickerPosition={stickerPosition}
 						setStickerPosition={setStickerPosition}
+						stickerScale={stickerScale}
+						setStickerScale={setStickerScale}
 						currentTime={currentTime}
 						duration={duration}
 						onTimeUpdate={(t) => setCurrentTime(t)}

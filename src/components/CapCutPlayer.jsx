@@ -35,10 +35,14 @@ export default function CapCutPlayer({
 	showTextOverlay = false,
 	textPosition = { x: 50, y: 12 },
 	setTextPosition,
+	textScale = 1.0,
+	setTextScale,
 	stickerOverlay = "",
 	showStickerOverlay = false,
 	stickerPosition = { x: 85, y: 85 },
 	setStickerPosition,
+	stickerScale = 1.0,
+	setStickerScale,
 	currentTime = 0,
 	duration = 36.22,
 	onTimeUpdate,
@@ -429,10 +433,11 @@ export default function CapCutPlayer({
 								position: "absolute",
 								left: `${textPosition?.x ?? 50}%`,
 								top: `${textPosition?.y ?? 12}%`,
-								transform: "translate(-50%, -50%)",
+								transform: `translate(-50%, -50%) scale(${textScale ?? 1.0})`,
+								transformOrigin: "center center",
 							}}
 							className={`z-30 select-none px-3.5 py-1.5 bg-black/85 rounded-md border-2 border-yellow-400 text-yellow-300 font-extrabold text-xs sm:text-sm tracking-wide text-center uppercase shadow-2xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] max-w-[90%] transition-shadow cursor-grab active:cursor-grabbing group hover:border-[#00e5ff] hover:shadow-[0_0_15px_rgba(0,229,255,0.5)] ${
-								isDraggingText ? "cursor-grabbing border-[#00e5ff] scale-105 shadow-[0_0_20px_rgba(0,229,255,0.7)] ring-2 ring-[#00e5ff]" : ""
+								isDraggingText ? "cursor-grabbing border-[#00e5ff] shadow-[0_0_20px_rgba(0,229,255,0.7)] ring-2 ring-[#00e5ff]" : ""
 							}`}
 							title="মাউস দিয়ে চেপে ধরে ড্র্যাগ করে পজিশন পরিবর্তন করুন"
 						>
@@ -441,14 +446,36 @@ export default function CapCutPlayer({
 								<span>{textOverlay}</span>
 							</div>
 
-							{/* Coordinate pill tooltip */}
-							<div className="absolute -bottom-5 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 text-[#00e5ff] text-[9px] font-mono px-1.5 py-0.5 rounded border border-[#00e5ff]/40 whitespace-nowrap shadow-md">
-								X: {textPosition?.x ?? 50}% | Y: {textPosition?.y ?? 12}% (Drag to move)
+							{/* Coordinate & Size Resize Tooltip */}
+							<div className="absolute -bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity bg-black/95 text-[#00e5ff] text-[9px] font-mono px-2 py-0.5 rounded-full border border-[#00e5ff]/50 whitespace-nowrap shadow-lg flex items-center gap-1.5 z-40">
+								<button
+									type="button"
+									onClick={(e) => {
+										e.stopPropagation();
+										if (setTextScale) setTextScale(Math.max(0.5, Number(((textScale ?? 1.0) - 0.1).toFixed(1))));
+									}}
+									className="w-3.5 h-3.5 bg-[#25262c] hover:bg-[#353742] text-white rounded flex items-center justify-center font-bold text-[10px] cursor-pointer"
+									title="ছোট করুন (Scale down)"
+								>
+									-
+								</button>
+								<span>{Math.round((textScale ?? 1.0) * 100)}%</span>
+								<button
+									type="button"
+									onClick={(e) => {
+										e.stopPropagation();
+										if (setTextScale) setTextScale(Math.min(2.5, Number(((textScale ?? 1.0) + 0.1).toFixed(1))));
+									}}
+									className="w-3.5 h-3.5 bg-[#25262c] hover:bg-[#353742] text-white rounded flex items-center justify-center font-bold text-[10px] cursor-pointer"
+									title="বড় করুন (Scale up)"
+								>
+									+
+								</button>
 							</div>
 						</div>
 					)}
 
-					{/* Sticker Overlay (Reaction Meme) - Freely Draggable */}
+					{/* Sticker Overlay (Reaction Meme) - Freely Draggable & Scalable */}
 					{showStickerOverlay && stickerOverlay && !isCopyrightFreeActive && (
 						<div
 							onMouseDown={handleStickerMouseDown}
@@ -457,18 +484,43 @@ export default function CapCutPlayer({
 								position: "absolute",
 								left: `${stickerPosition?.x ?? 85}%`,
 								top: `${stickerPosition?.y ?? 85}%`,
-								transform: "translate(-50%, -50%)",
+								transform: `translate(-50%, -50%) scale(${stickerScale ?? 1.0})`,
+								transformOrigin: "center center",
 							}}
 							className={`z-30 select-none text-2xl sm:text-3xl filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)] cursor-grab active:cursor-grabbing group transition-transform ${
-								isDraggingSticker ? "scale-125 cursor-grabbing" : "hover:scale-110"
+								isDraggingSticker ? "cursor-grabbing" : "hover:scale-105"
 							}`}
 							title="মাউস দিয়ে টেনে স্টিকারের পজিশন পরিবর্তন করুন"
 						>
 							<div className="relative pointer-events-none flex items-center justify-center">
 								<span>{stickerOverlay}</span>
-								<div className="absolute -bottom-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 text-[#00e5ff] text-[8.5px] font-mono px-1 py-0.2 rounded border border-[#00e5ff]/40 whitespace-nowrap shadow">
-									✥ Drag
-								</div>
+							</div>
+
+							{/* Coordinate & Size Resize Tooltip for Sticker */}
+							<div className="absolute -bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity bg-black/95 text-[#00e5ff] text-[8.5px] font-mono px-2 py-0.5 rounded-full border border-[#00e5ff]/50 whitespace-nowrap shadow-lg flex items-center gap-1.5 z-40">
+								<button
+									type="button"
+									onClick={(e) => {
+										e.stopPropagation();
+										if (setStickerScale) setStickerScale(Math.max(0.5, Number(((stickerScale ?? 1.0) - 0.1).toFixed(1))));
+									}}
+									className="w-3.5 h-3.5 bg-[#25262c] hover:bg-[#353742] text-white rounded flex items-center justify-center font-bold text-[10px] cursor-pointer"
+									title="ছোট করুন (Scale down)"
+								>
+									-
+								</button>
+								<span>{Math.round((stickerScale ?? 1.0) * 100)}%</span>
+								<button
+									type="button"
+									onClick={(e) => {
+										e.stopPropagation();
+										if (setStickerScale) setStickerScale(Math.min(2.8, Number(((stickerScale ?? 1.0) + 0.1).toFixed(1))));
+									}}
+									className="w-3.5 h-3.5 bg-[#25262c] hover:bg-[#353742] text-white rounded flex items-center justify-center font-bold text-[10px] cursor-pointer"
+									title="বড় করুন (Scale up)"
+								>
+									+
+								</button>
 							</div>
 						</div>
 					)}

@@ -85,12 +85,16 @@ export default function CapCutMediaLibrary({
 	setShowTextOverlay,
 	textPosition = { x: 50, y: 12 },
 	setTextPosition,
+	textScale = 1.0,
+	setTextScale,
 	stickerOverlay,
 	setStickerOverlay,
 	showStickerOverlay,
 	setShowStickerOverlay,
 	stickerPosition = { x: 85, y: 85 },
 	setStickerPosition,
+	stickerScale = 1.0,
+	setStickerScale,
 	// Effects & Transitions
 	applyZoom,
 	setApplyZoom,
@@ -1037,6 +1041,56 @@ export default function CapCutMediaLibrary({
 							💡 <strong>টিপ:</strong> প্লেয়ারের স্ক্রিনে হলুদ টেক্সটটির ওপর মাউস দিয়ে চেপে ধরে ড্র্যাগ (Drag) করে আপনার ইচ্ছেমতো যেকোনো স্থানে টেনে বসাতে পারবেন।
 						</p>
 					</div>
+
+					{/* Text Size / Scale Control */}
+					<div className="p-2.5 rounded-lg border bg-[#141518] border-[#26282f] flex flex-col gap-2">
+						<div className="flex items-center justify-between text-[10.5px] font-bold text-white">
+							<div className="flex items-center gap-1.5">
+								<Type className="w-3.5 h-3.5 text-yellow-400" />
+								<span>টেক্সট সাইজ (ছোট/বড় স্কেল)</span>
+							</div>
+							<span className="font-mono text-yellow-300 text-[10px] bg-[#1a1b20] px-2 py-0.5 rounded border border-[#2b2d35]">
+								{Math.round((textScale ?? 1.0) * 100)}%
+							</span>
+						</div>
+
+						<div className="flex items-center gap-3 pt-1">
+							<span className="text-[10px] text-slate-500 font-bold">ছোট</span>
+							<input
+								type="range"
+								min={0.5}
+								max={2.2}
+								step={0.05}
+								value={textScale ?? 1.0}
+								onChange={(e) => setTextScale && setTextScale(Number(e.target.value))}
+								className="flex-1 accent-yellow-400 h-1.5 bg-[#25262c] rounded cursor-pointer"
+							/>
+							<span className="text-[10px] text-yellow-400 font-bold">বড়</span>
+						</div>
+
+						{/* Quick Size Presets */}
+						<div className="grid grid-cols-4 gap-1.5 pt-0.5">
+							{[
+								{ label: "Small (70%)", val: 0.7 },
+								{ label: "Normal (100%)", val: 1.0 },
+								{ label: "Large (135%)", val: 1.35 },
+								{ label: "Huge (170%)", val: 1.7 },
+							].map((p) => (
+								<button
+									key={p.val}
+									type="button"
+									onClick={() => setTextScale && setTextScale(p.val)}
+									className={`py-1 rounded text-[9.5px] font-bold border transition-all cursor-pointer text-center ${
+										Math.abs((textScale ?? 1.0) - p.val) < 0.05
+											? "bg-[#272110] border-yellow-400 text-yellow-300"
+											: "bg-[#1f2025] border-[#2b2d35] text-slate-300 hover:text-white"
+									}`}
+								>
+									{p.label}
+								</button>
+							))}
+						</div>
+					</div>
 				</div>
 			)}
 
@@ -1248,6 +1302,56 @@ export default function CapCutMediaLibrary({
 						<p className="text-[9.5px] text-slate-400 leading-normal pt-0.5">
 							💡 <strong>টিপ:</strong> প্লেয়ারের স্ক্রিনে স্টিকারটি মাউস দিয়ে চেপে ধরে ড্র্যাগ (Drag) করে যেকোনো পজিশনে টেনে বসাতে পারবেন।
 						</p>
+					</div>
+
+					{/* Sticker Size / Scale Control */}
+					<div className="p-2.5 rounded-lg border bg-[#141518] border-[#26282f] flex flex-col gap-2">
+						<div className="flex items-center justify-between text-[10.5px] font-bold text-white">
+							<div className="flex items-center gap-1.5">
+								<Star className="w-3.5 h-3.5 text-[#00e5ff]" />
+								<span>স্টিকার সাইজ (ছোট/বড় স্কেল)</span>
+							</div>
+							<span className="font-mono text-[#00e5ff] text-[10px] bg-[#1a1b20] px-2 py-0.5 rounded border border-[#2b2d35]">
+								{Math.round((stickerScale ?? 1.0) * 100)}%
+							</span>
+						</div>
+
+						<div className="flex items-center gap-3 pt-1">
+							<span className="text-[10px] text-slate-500 font-bold">ছোট</span>
+							<input
+								type="range"
+								min={0.5}
+								max={2.5}
+								step={0.05}
+								value={stickerScale ?? 1.0}
+								onChange={(e) => setStickerScale && setStickerScale(Number(e.target.value))}
+								className="flex-1 accent-[#00e5ff] h-1.5 bg-[#25262c] rounded cursor-pointer"
+							/>
+							<span className="text-[10px] text-[#00e5ff] font-bold">বড়</span>
+						</div>
+
+						{/* Quick Size Presets */}
+						<div className="grid grid-cols-4 gap-1.5 pt-0.5">
+							{[
+								{ label: "Small (70%)", val: 0.7 },
+								{ label: "Normal (100%)", val: 1.0 },
+								{ label: "Large (140%)", val: 1.4 },
+								{ label: "Huge (190%)", val: 1.9 },
+							].map((p) => (
+								<button
+									key={p.val}
+									type="button"
+									onClick={() => setStickerScale && setStickerScale(p.val)}
+									className={`py-1 rounded text-[9.5px] font-bold border transition-all cursor-pointer text-center ${
+										Math.abs((stickerScale ?? 1.0) - p.val) < 0.05
+											? "bg-[#102327] border-[#00e5ff] text-[#00e5ff]"
+											: "bg-[#1f2025] border-[#2b2d35] text-slate-300 hover:text-white"
+									}`}
+								>
+									{p.label}
+								</button>
+							))}
+						</div>
 					</div>
 				</div>
 			)}
