@@ -22,6 +22,7 @@ export async function POST(request) {
 			contrast = 1.05,
 			saturation = 1.08,
 			speedShift = true, // 1% speed shift to break audio-visual hash
+			videoSpeed = 1.10, // Default 1.10x speed boost for video and audio sync
 			// Audio & Voiceover
 			muteOriginalAudio = true, // Default to true: 100% mute original audio for zero copyright match!
 			originalAudioVolume = 0.0,
@@ -204,11 +205,18 @@ export async function POST(request) {
 			baseV = "[vbgframe]";
 		}
 
-		// 6. PTS Speed Shift (1.01x / setpts=0.99*PTS to break exact timing matching)
-		if (speedShift) {
-			filters.push(`${baseV}setpts=0.99*PTS[vpts]`);
+		// 6. Video Speed Shift (1.10x by default for fast viral pacing and breaking video fingerprint)
+		const effectiveSpeed = Math.max(0.5, Math.min(2.0, Number(videoSpeed) || 1.10));
+		if (effectiveSpeed !== 1.0) {
+			filters.push(`${baseV}setpts=PTS/${effectiveSpeed.toFixed(3)}[vpts]`);
 			baseV = "[vpts]";
 		}
+
+		// Calculate target duration adjusted for video speed so FFmpeg never loops indefinitely
+		const rawDuration = (trim.enabled && trim.end > trim.start)
+			? (trim.end - trim.start)
+			: (metadata.duration || 36.2);
+		const targetDuration = rawDuration / effectiveSpeed;
 
 		// 7. Audio Processing & Mixing
 		const audioMixLabels = [];
@@ -224,8 +232,8 @@ export async function POST(request) {
 				);
 			}
 
-			if (speedShift) {
-				origAudioFilters.push("atempo=1.01");
+			if (effectiveSpeed !== 1.0) {
+				origAudioFilters.push(`atempo=${effectiveSpeed.toFixed(3)}`);
 			}
 
 			if (stereoDelay > 0) {
@@ -271,11 +279,6 @@ export async function POST(request) {
 			filters.push(`aevalsrc=0:d=${Math.ceil(targetDuration)}[asilence]`);
 			finalAudioLabel = "[asilence]";
 		}
-
-		// Calculate target duration so FFmpeg never runs into infinite BGM loop
-		const targetDuration = (trim.enabled && trim.end > trim.start)
-			? (trim.end - trim.start)
-			: (metadata.duration || 36.2);
 
 		// Assemble FFmpeg execution args
 		ffmpegArgs.push("-filter_complex", filters.join(";"));

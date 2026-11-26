@@ -57,7 +57,9 @@ export default function CapCutStudio() {
 	const [voiceoverVolume, setVoiceoverVolume] = useState(1.2);
 	const [voiceProvider, setVoiceProvider] = useState("edge"); // 'edge' (free), 'elevenlabs' (paid), 'system'
 	const [selectedVoice, setSelectedVoice] = useState("bn-BD-PradeepNeural");
-	const [voiceRate, setVoiceRate] = useState(1.0);
+	const [voiceRate, setVoiceRate] = useState(1.10); // 1.10x speech rate matched to video speed
+	const [videoSpeed, setVideoSpeed] = useState(1.10); // 1.10x video speed boost
+	const [syncVoiceSpeed, setSyncVoiceSpeed] = useState(true);
 	const [creatingStatus, setCreatingStatus] = useState("");
 
 	// Mode Switcher: 'auto' (1-click all safeguards) vs 'manual' (show all sliders & controls)
@@ -229,6 +231,7 @@ export default function CapCutStudio() {
 					contrast,
 					saturation,
 					speedShift: true,
+					videoSpeed,
 					muteOriginalAudio: true, // 100% original audio muted
 					originalAudioVolume: 0,
 					applyAudioEqualizer: true,
@@ -462,6 +465,10 @@ export default function CapCutStudio() {
 						setSelectedVoice={setSelectedVoice}
 						voiceRate={voiceRate}
 						setVoiceRate={setVoiceRate}
+						videoSpeed={videoSpeed}
+						setVideoSpeed={setVideoSpeed}
+						syncVoiceSpeed={syncVoiceSpeed}
+						setSyncVoiceSpeed={setSyncVoiceSpeed}
 						videoTitle={videoTitle}
 						videoFilename={videoFilename}
 					/>

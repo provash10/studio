@@ -20,6 +20,7 @@ import {
 	Wand2,
 	Layers,
 	ChevronDown,
+	Zap,
 } from "lucide-react";
 
 export default function CapCutInspector({
@@ -61,6 +62,10 @@ export default function CapCutInspector({
 	setSelectedVoice,
 	voiceRate = 1.0,
 	setVoiceRate,
+	videoSpeed = 1.10,
+	setVideoSpeed,
+	syncVoiceSpeed = true,
+	setSyncVoiceSpeed,
 	videoTitle,
 	videoFilename,
 }) {
@@ -290,6 +295,10 @@ export default function CapCutInspector({
 									<div className="flex items-center gap-2">
 										<CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
 										<span>Metadata Wipe (-map_metadata -1)</span>
+									</div>
+									<div className="flex items-center gap-2">
+										<CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+										<span>Fast 1.10x Pacing: Synchronized Video & Voice Speed Boost</span>
 									</div>
 								</div>
 							</div>
@@ -551,6 +560,56 @@ export default function CapCutInspector({
 									onChange={(e) => setMetadataClean(e.target.checked)}
 									className="accent-[#00e5ff] w-4 h-4 cursor-pointer"
 								/>
+							</div>
+
+							{/* Item 7: Video & Synchronized Voice Speed Boost */}
+							<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-1.5">
+								<div className="flex items-center justify-between">
+									<div>
+										<div className="text-[11px] font-bold text-white flex items-center gap-1.5">
+											<Zap className="w-3.5 h-3.5 text-[#00e5ff]" />
+											<span>7. Video & Voice Speed Boost</span>
+										</div>
+										<div className="text-[9px] text-slate-500">
+											ভিডিও ও ভয়েস একসাথে ফাস্ট হবে যাতে ইউটিউব রোবট ধরতে না পারে।
+										</div>
+									</div>
+									<span className="font-mono text-[#00e5ff] font-bold text-xs bg-[#121316] px-2 py-0.5 rounded border border-[#2b2d35]">
+										{videoSpeed.toFixed(2)}x
+									</span>
+								</div>
+
+								<div className="flex items-center gap-3 pt-1">
+									<input
+										type="range"
+										min={1.0}
+										max={1.3}
+										step={0.05}
+										value={videoSpeed}
+										onChange={(e) => {
+											const val = Number(e.target.value);
+											setVideoSpeed && setVideoSpeed(val);
+											if (syncVoiceSpeed && setVoiceRate) {
+												setVoiceRate(val);
+											}
+										}}
+										className="flex-1 accent-[#00e5ff] h-1.5 bg-[#25262c] rounded cursor-pointer"
+									/>
+									<label className="flex items-center gap-1.5 text-[9.5px] text-slate-300 cursor-pointer">
+										<input
+											type="checkbox"
+											checked={syncVoiceSpeed}
+											onChange={(e) => {
+												setSyncVoiceSpeed && setSyncVoiceSpeed(e.target.checked);
+												if (e.target.checked && setVoiceRate) {
+													setVoiceRate(videoSpeed);
+												}
+											}}
+											className="accent-[#00e5ff] w-3.5 h-3.5 cursor-pointer"
+										/>
+										<span>Sync Voice Speed</span>
+									</label>
+								</div>
 							</div>
 						</div>
 
