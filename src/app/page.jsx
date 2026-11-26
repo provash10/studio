@@ -55,6 +55,9 @@ export default function CapCutStudio() {
 	const [voiceoverEnabled, setVoiceoverEnabled] = useState(true);
 	const [voiceoverFileName, setVoiceoverFileName] = useState(null);
 	const [voiceoverVolume, setVoiceoverVolume] = useState(1.2);
+	const [voiceProvider, setVoiceProvider] = useState("edge"); // 'edge' (free), 'elevenlabs' (paid), 'system'
+	const [selectedVoice, setSelectedVoice] = useState("bn-BD-PradeepNeural");
+	const [voiceRate, setVoiceRate] = useState(1.0);
 	const [creatingStatus, setCreatingStatus] = useState("");
 
 	// Mode Switcher: 'auto' (1-click all safeguards) vs 'manual' (show all sliders & controls)
@@ -175,7 +178,7 @@ export default function CapCutStudio() {
 					script = "Wait until you see what happens next in this incredible video! Watch closely right now!";
 				}
 
-				setCreatingStatus("2/3 Synthesizing AI voiceover (ElevenLabs / Audio Studio)...");
+				setCreatingStatus("2/3 Synthesizing AI voiceover...");
 				try {
 					const savedElevenKey = typeof window !== "undefined" ? localStorage.getItem("studio_elevenlabs_key") : "";
 					const ttsRes = await fetch("/api/ai/tts", {
@@ -183,8 +186,11 @@ export default function CapCutStudio() {
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
 							text: script,
-							voiceId: "21m00Tcm4TlvDq8ikWAM",
+							provider: voiceProvider,
+							voice: selectedVoice,
+							voiceId: selectedVoice,
 							apiKey: savedElevenKey || undefined,
+							rate: voiceRate,
 						}),
 					});
 					const ttsData = await ttsRes.json();
@@ -449,6 +455,12 @@ export default function CapCutStudio() {
 						setVoiceoverFileName={setVoiceoverFileName}
 						voiceoverVolume={voiceoverVolume}
 						setVoiceoverVolume={setVoiceoverVolume}
+						voiceProvider={voiceProvider}
+						setVoiceProvider={setVoiceProvider}
+						selectedVoice={selectedVoice}
+						setSelectedVoice={setSelectedVoice}
+						voiceRate={voiceRate}
+						setVoiceRate={setVoiceRate}
 						videoTitle={videoTitle}
 					/>
 				</div>

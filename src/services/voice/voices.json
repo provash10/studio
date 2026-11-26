@@ -1,0 +1,34 @@
+[
+	{
+		"category": "Free AI Voice (Edge-TTS)",
+		"provider": "edge",
+		"voices": [
+			{ "id": "bn-BD-PradeepNeural", "name": "🇧🇩 Bangla - Pradeep (Male)", "lang": "bn", "gender": "male" },
+			{ "id": "bn-BD-NabanitaNeural", "name": "🇧🇩 Bangla - Nabanita (Female)", "lang": "bn", "gender": "female" },
+			{ "id": "en-US-ChristopherNeural", "name": "🇺🇸 English - Christopher (Male Viral)", "lang": "en", "gender": "male" },
+			{ "id": "en-US-JennyNeural", "name": "🇺🇸 English - Jenny (Female Viral)", "lang": "en", "gender": "female" },
+			{ "id": "en-US-GuyNeural", "name": "🇺🇸 English - Guy (Male Deep)", "lang": "en", "gender": "male" },
+			{ "id": "en-US-AriaNeural", "name": "🇺🇸 English - Aria (Female News)", "lang": "en", "gender": "female" },
+			{ "id": "hi-IN-MadhurNeural", "name": "🇮🇳 Hindi - Madhur (Male)", "lang": "hi", "gender": "male" },
+			{ "id": "hi-IN-SwaraNeural", "name": "🇮🇳 Hindi - Swara (Female)", "lang": "hi", "gender": "female" }
+		]
+	},
+	{
+		"category": "Premium AI Voice (ElevenLabs / Paid)",
+		"provider": "elevenlabs",
+		"voices": [
+			{ "id": "21m00Tcm4TlvDq8ikWAM", "name": "💎 Rachel (Calm & Natural)", "lang": "en", "gender": "female" },
+			{ "id": "pNInz6obpgDQGcFmaJgB", "name": "💎 Adam (Deep Viral Narration)", "lang": "en", "gender": "male" },
+			{ "id": "ErXwobaYiN019PkySvjV", "name": "💎 Antoni (Expressive Storytelling)", "lang": "en", "gender": "male" },
+			{ "id": "EXAVITQu4vr4xnSDxMaL", "name": "💎 Bella (Upbeat & Energetic)", "lang": "en", "gender": "female" },
+			{ "id": "custom", "name": "💎 Custom Voice ID...", "lang": "multi", "gender": "custom" }
+		]
+	},
+	{
+		"category": "System Audio (Offline Fallback)",
+		"provider": "system",
+		"voices": [
+			{ "id": "system-default", "name": "💻 Windows Speech (Default Offline)", "lang": "en", "gender": "auto" }
+		]
+	}
+]

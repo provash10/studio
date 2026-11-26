@@ -55,6 +55,12 @@ export default function CapCutInspector({
 	setVoiceoverFileName,
 	voiceoverVolume,
 	setVoiceoverVolume,
+	voiceProvider = "edge",
+	setVoiceProvider,
+	selectedVoice = "bn-BD-PradeepNeural",
+	setSelectedVoice,
+	voiceRate = 1.0,
+	setVoiceRate,
 	videoTitle,
 }) {
 	const [activeTopTab, setActiveTopTab] = useState("video"); // 'video', 'voice', 'animation', 'adjustment'
@@ -115,9 +121,9 @@ export default function CapCutInspector({
 		}
 	};
 
-	const handleGenerateElevenLabs = async () => {
+	const handleGenerateVoice = async () => {
 		if (!scriptText.trim()) {
-			alert("Please click 'Generate Rephrased' first to write a script!");
+			alert("Please click 'Generate Rephrased' first or type your script!");
 			return;
 		}
 		setIsGeneratingVoice(true);
@@ -127,8 +133,11 @@ export default function CapCutInspector({
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					text: scriptText,
-					voiceId: elevenVoiceId,
+					provider: voiceProvider,
+					voice: selectedVoice,
+					voiceId: selectedVoice,
 					apiKey: elevenApiKey || undefined,
+					rate: voiceRate,
 				}),
 			});
 			const data = await res.json();
@@ -690,45 +699,156 @@ export default function CapCutInspector({
 							className="w-full bg-[#1a1b20] border border-[#2b2d35] rounded p-2 text-slate-200 text-[11px] focus:outline-none focus:border-[#00e5ff] leading-relaxed"
 						/>
 
-						{/* ElevenLabs Settings */}
-						<div className="flex flex-col gap-2 pt-2 border-t border-[#212328]">
-							<span className="font-bold text-white text-[11px]">
-								ElevenLabs AI Voiceover
+						{/* Modular Voice Hub: Free Edge-TTS, ElevenLabs Paid, and System Offline */}
+						<div className="flex flex-col gap-2.5 pt-2 border-t border-[#212328]">
+							<span className="font-bold text-white text-[11px] flex items-center justify-between">
+								<span>Voice Engine & Options</span>
+								<span className="text-[9px] text-[#00e5ff] font-mono">
+									{voiceProvider === "edge"
+										? "🟢 Free & Unlimited"
+										: voiceProvider === "elevenlabs"
+										? "💎 Paid API"
+										: "💻 Offline"}
+								</span>
 							</span>
-							<input
-								type="password"
-								placeholder="Paste ElevenLabs API Key (or leave blank for built-in)..."
-								value={elevenApiKey}
-								onChange={(e) => handleElevenApiKeyChange(e.target.value)}
-								className="bg-[#1a1b20] border border-[#2b2d35] rounded p-1.5 text-[11px] text-white focus:outline-none focus:border-[#00e5ff]"
-							/>
-							<div className="flex items-center gap-2">
-								<select
-									value={elevenVoiceId}
-									onChange={(e) => setElevenVoiceId(e.target.value)}
-									className="flex-1 bg-[#1a1b20] border border-[#2b2d35] rounded p-1.5 text-[10px] text-slate-300"
-								>
-									<option value="21m00Tcm4TlvDq8ikWAM">Rachel (Calm)</option>
-									<option value="pNInz6obpgDQGcFmaJgB">Adam (Deep)</option>
-									<option value="ErXwobaYiN019PkySvjV">Antoni (Energetic)</option>
-								</select>
 
+							{/* Provider Selection Tabs */}
+							<div className="grid grid-cols-3 gap-1 bg-[#121316] p-1 rounded-lg border border-[#212328]">
 								<button
 									type="button"
-									onClick={handleGenerateElevenLabs}
-									disabled={isGeneratingVoice}
-									className="px-3 py-1.5 bg-[#1f2025] hover:bg-[#282a32] text-[#00e5ff] border border-[#00e5ff]/50 rounded font-bold text-[10px] flex items-center justify-center gap-1 disabled:opacity-50 shrink-0 cursor-pointer"
+									onClick={() => {
+										setVoiceProvider && setVoiceProvider("edge");
+										setSelectedVoice && setSelectedVoice("bn-BD-PradeepNeural");
+									}}
+									className={`py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+										voiceProvider === "edge"
+											? "bg-[#00e5ff] text-black shadow"
+											: "text-slate-400 hover:text-white"
+									}`}
 								>
-									<Bot className="w-3 h-3" />
-									{isGeneratingVoice ? "Synthesizing..." : "Create Voice"}
+									Free AI Voice
+								</button>
+								<button
+									type="button"
+									onClick={() => {
+										setVoiceProvider && setVoiceProvider("elevenlabs");
+										setSelectedVoice && setSelectedVoice("21m00Tcm4TlvDq8ikWAM");
+									}}
+									className={`py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+										voiceProvider === "elevenlabs"
+											? "bg-amber-400 text-black shadow"
+											: "text-slate-400 hover:text-white"
+									}`}
+								>
+									ElevenLabs
+								</button>
+								<button
+									type="button"
+									onClick={() => {
+										setVoiceProvider && setVoiceProvider("system");
+										setSelectedVoice && setSelectedVoice("system-default");
+									}}
+									className={`py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
+										voiceProvider === "system"
+											? "bg-slate-300 text-black shadow"
+											: "text-slate-400 hover:text-white"
+									}`}
+								>
+									System TTS
 								</button>
 							</div>
+
+							{/* Voice Character Dropdown */}
+							<div className="flex flex-col gap-1">
+								<span className="text-[10px] text-slate-400">Select Voice Character:</span>
+								<select
+									value={selectedVoice}
+									onChange={(e) => setSelectedVoice && setSelectedVoice(e.target.value)}
+									className="w-full bg-[#1a1b20] border border-[#2b2d35] rounded p-1.5 text-[10.5px] text-white focus:outline-none focus:border-[#00e5ff]"
+								>
+									{voiceProvider === "edge" && (
+										<>
+											<option value="bn-BD-PradeepNeural">🇧🇩 Bangla - Pradeep (Male)</option>
+											<option value="bn-BD-NabanitaNeural">🇧🇩 Bangla - Nabanita (Female)</option>
+											<option value="en-US-ChristopherNeural">🇺🇸 English - Christopher (Male Viral)</option>
+											<option value="en-US-JennyNeural">🇺🇸 English - Jenny (Female Viral)</option>
+											<option value="en-US-GuyNeural">🇺🇸 English - Guy (Deep Male)</option>
+											<option value="hi-IN-MadhurNeural">🇮🇳 Hindi - Madhur (Male)</option>
+										</>
+									)}
+									{voiceProvider === "elevenlabs" && (
+										<>
+											<option value="21m00Tcm4TlvDq8ikWAM">💎 Rachel (Calm & Natural)</option>
+											<option value="pNInz6obpgDQGcFmaJgB">💎 Adam (Deep Viral Narration)</option>
+											<option value="ErXwobaYiN019PkySvjV">💎 Antoni (Expressive Storytelling)</option>
+											<option value="EXAVITQu4vr4xnSDxMaL">💎 Bella (Upbeat & Energetic)</option>
+										</>
+									)}
+									{voiceProvider === "system" && (
+										<option value="system-default">💻 Windows Speech (Offline Engine)</option>
+									)}
+								</select>
+							</div>
+
+							{/* If ElevenLabs is chosen, show API Key input */}
+							{voiceProvider === "elevenlabs" && (
+								<div className="flex flex-col gap-1">
+									<span className="text-[10px] text-amber-300">ElevenLabs API Key:</span>
+									<input
+										type="password"
+										placeholder="Paste ElevenLabs xi-api-key..."
+										value={elevenApiKey}
+										onChange={(e) => handleElevenApiKeyChange(e.target.value)}
+										className="bg-[#1a1b20] border border-amber-500/50 rounded p-1.5 text-[11px] text-white focus:outline-none"
+									/>
+								</div>
+							)}
+
+							{/* Speed Slider */}
+							<div className="flex items-center justify-between text-[10px] pt-1">
+								<span className="text-slate-400">Speech Speed:</span>
+								<div className="flex items-center gap-2">
+									<input
+										type="range"
+										min={0.8}
+										max={1.5}
+										step={0.1}
+										value={voiceRate}
+										onChange={(e) => setVoiceRate && setVoiceRate(Number(e.target.value))}
+										className="w-20 accent-[#00e5ff] h-1 bg-[#25262c] rounded cursor-pointer"
+									/>
+									<span className="font-mono text-slate-200 w-8 text-right bg-[#121316] px-1 py-0.5 rounded border border-[#2b2d35]">
+										{voiceRate}x
+									</span>
+								</div>
+							</div>
+
+							{/* Generate Voice Button */}
+							<button
+								type="button"
+								onClick={handleGenerateVoice}
+								disabled={isGeneratingVoice}
+								className="w-full py-2 bg-gradient-to-r from-[#00b4d8] to-[#00e5ff] hover:from-[#00cbe2] hover:to-[#33ebff] text-black font-extrabold text-[11px] rounded-lg shadow-md flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer mt-1"
+							>
+								<Bot className="w-3.5 h-3.5" />
+								<span>{isGeneratingVoice ? "Synthesizing Voice..." : "Create Voiceover"}</span>
+							</button>
 						</div>
 
+						{/* Audio Preview Player when Voiceover is Ready */}
 						{voiceoverFileName && (
-							<div className="p-2 bg-emerald-950/40 border border-emerald-500/30 rounded text-[10px] text-emerald-300 flex items-center gap-1.5">
-								<CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-								<span>Voiceover ready and mapped to timeline!</span>
+							<div className="p-2.5 bg-[#0e1d16] border border-emerald-500/50 rounded-lg flex flex-col gap-1.5">
+								<div className="flex items-center justify-between text-[10px] text-emerald-300 font-bold">
+									<div className="flex items-center gap-1.5">
+										<CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+										<span>Voiceover Ready ({voiceoverFileName})</span>
+									</div>
+								</div>
+								<audio
+									controls
+									src={`/voiceovers/${voiceoverFileName}`}
+									className="w-full h-7 mt-0.5"
+								/>
 							</div>
 						)}
 					</div>
