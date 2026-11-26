@@ -37,6 +37,8 @@ export default function CapCutPlayer({
 	setTextPosition,
 	stickerOverlay = "",
 	showStickerOverlay = false,
+	stickerPosition = { x: 85, y: 85 },
+	setStickerPosition,
 	currentTime = 0,
 	duration = 36.22,
 	onTimeUpdate,
@@ -105,6 +107,57 @@ export default function CapCutPlayer({
 			window.removeEventListener("touchend", handleEnd);
 		};
 	}, [isDraggingText, setTextPosition]);
+
+	// Drag event handlers for positioning sticker overlay
+	const [isDraggingSticker, setIsDraggingSticker] = useState(false);
+
+	const handleStickerMouseDown = (e) => {
+		e.stopPropagation();
+		e.preventDefault();
+		setIsDraggingSticker(true);
+	};
+
+	const handleStickerTouchStart = (e) => {
+		e.stopPropagation();
+		setIsDraggingSticker(true);
+	};
+
+	useEffect(() => {
+		if (!isDraggingSticker) return;
+
+		const handleMouseMove = (e) => {
+			if (!canvasRef.current || !setStickerPosition) return;
+			const rect = canvasRef.current.getBoundingClientRect();
+			const xPct = Math.max(5, Math.min(95, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+			const yPct = Math.max(5, Math.min(95, Math.round(((e.clientY - rect.top) / rect.height) * 100)));
+			setStickerPosition({ x: xPct, y: yPct });
+		};
+
+		const handleTouchMove = (e) => {
+			if (!canvasRef.current || !setStickerPosition || !e.touches[0]) return;
+			const rect = canvasRef.current.getBoundingClientRect();
+			const touch = e.touches[0];
+			const xPct = Math.max(5, Math.min(95, Math.round(((touch.clientX - rect.left) / rect.width) * 100)));
+			const yPct = Math.max(5, Math.min(95, Math.round(((touch.clientY - rect.top) / rect.height) * 100)));
+			setStickerPosition({ x: xPct, y: yPct });
+		};
+
+		const handleEnd = () => {
+			setIsDraggingSticker(false);
+		};
+
+		window.addEventListener("mousemove", handleMouseMove);
+		window.addEventListener("mouseup", handleEnd);
+		window.addEventListener("touchmove", handleTouchMove);
+		window.addEventListener("touchend", handleEnd);
+
+		return () => {
+			window.removeEventListener("mousemove", handleMouseMove);
+			window.removeEventListener("mouseup", handleEnd);
+			window.removeEventListener("touchmove", handleTouchMove);
+			window.removeEventListener("touchend", handleEnd);
+		};
+	}, [isDraggingSticker, setStickerPosition]);
 
 	useEffect(() => {
 		if (videoRef.current && seekTime !== null) {
@@ -395,10 +448,28 @@ export default function CapCutPlayer({
 						</div>
 					)}
 
-					{/* Sticker Overlay (Reaction Meme) */}
+					{/* Sticker Overlay (Reaction Meme) - Freely Draggable */}
 					{showStickerOverlay && stickerOverlay && !isCopyrightFreeActive && (
-						<div className="absolute bottom-12 right-4 z-20 pointer-events-none text-2xl sm:text-3xl filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] animate-bounce">
-							{stickerOverlay}
+						<div
+							onMouseDown={handleStickerMouseDown}
+							onTouchStart={handleStickerTouchStart}
+							style={{
+								position: "absolute",
+								left: `${stickerPosition?.x ?? 85}%`,
+								top: `${stickerPosition?.y ?? 85}%`,
+								transform: "translate(-50%, -50%)",
+							}}
+							className={`z-30 select-none text-2xl sm:text-3xl filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)] cursor-grab active:cursor-grabbing group transition-transform ${
+								isDraggingSticker ? "scale-125 cursor-grabbing" : "hover:scale-110"
+							}`}
+							title="মাউস দিয়ে টেনে স্টিকারের পজিশন পরিবর্তন করুন"
+						>
+							<div className="relative pointer-events-none flex items-center justify-center">
+								<span>{stickerOverlay}</span>
+								<div className="absolute -bottom-4 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 text-[#00e5ff] text-[8.5px] font-mono px-1 py-0.2 rounded border border-[#00e5ff]/40 whitespace-nowrap shadow">
+									✥ Drag
+								</div>
+							</div>
 						</div>
 					)}
 

@@ -35,6 +35,8 @@ import {
 	Trash2,
 	Move,
 	BookmarkPlus,
+	Headphones,
+	FileAudio,
 } from "lucide-react";
 
 export default function CapCutMediaLibrary({
@@ -87,6 +89,8 @@ export default function CapCutMediaLibrary({
 	setStickerOverlay,
 	showStickerOverlay,
 	setShowStickerOverlay,
+	stickerPosition = { x: 85, y: 85 },
+	setStickerPosition,
 	// Effects & Transitions
 	applyZoom,
 	setApplyZoom,
@@ -144,6 +148,120 @@ export default function CapCutMediaLibrary({
 		setSavedCustomPresets(updated);
 		if (typeof window !== "undefined") {
 			localStorage.setItem("studio_custom_text_presets", JSON.stringify(updated));
+		}
+	};
+
+	// --- Custom Audio States & Handlers ---
+	const [savedCustomAudios, setSavedCustomAudios] = useState([]);
+	const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+	const [audioSavedToast, setAudioSavedToast] = useState(false);
+
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			try {
+				const saved = localStorage.getItem("studio_custom_audios");
+				if (saved) {
+					const parsed = JSON.parse(saved);
+					if (Array.isArray(parsed)) setSavedCustomAudios(parsed);
+				}
+			} catch (e) {
+				console.warn("Could not load custom audios:", e);
+			}
+		}
+	}, []);
+
+	const handleAudioFileUpload = async (e) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		setIsUploadingAudio(true);
+		const formData = new FormData();
+		formData.append("file", file);
+		try {
+			const res = await fetch("/api/upload", {
+				method: "POST",
+				body: formData,
+			});
+			const data = await res.json();
+			if (data.success && data.filename) {
+				const newTrack = {
+					id: data.filename,
+					name: file.name,
+					url: data.url,
+					mood: "My Custom BGM",
+					bpm: "Custom Audio",
+				};
+				const updated = [newTrack, ...savedCustomAudios];
+				setSavedCustomAudios(updated);
+				if (typeof window !== "undefined") {
+					localStorage.setItem("studio_custom_audios", JSON.stringify(updated));
+				}
+				if (setBgmTrackName) setBgmTrackName(data.filename);
+				if (setBgmEnabled) setBgmEnabled(true);
+				setAudioSavedToast(true);
+				setTimeout(() => setAudioSavedToast(false), 2000);
+			}
+		} catch (err) {
+			alert("Audio upload failed: " + err.message);
+		} finally {
+			setIsUploadingAudio(false);
+		}
+	};
+
+	const handleDeleteCustomAudio = (indexToDelete, e) => {
+		if (e) e.stopPropagation();
+		const updated = savedCustomAudios.filter((_, idx) => idx !== indexToDelete);
+		setSavedCustomAudios(updated);
+		if (typeof window !== "undefined") {
+			localStorage.setItem("studio_custom_audios", JSON.stringify(updated));
+		}
+	};
+
+	// --- Custom Sticker States & Handlers ---
+	const [savedCustomStickers, setSavedCustomStickers] = useState([]);
+	const [customStickerInput, setCustomStickerInput] = useState("🔥");
+	const [customStickerLabel, setCustomStickerLabel] = useState("");
+	const [stickerSavedToast, setStickerSavedToast] = useState(false);
+
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			try {
+				const saved = localStorage.getItem("studio_custom_stickers");
+				if (saved) {
+					const parsed = JSON.parse(saved);
+					if (Array.isArray(parsed)) setSavedCustomStickers(parsed);
+				}
+			} catch (e) {
+				console.warn("Could not load custom stickers:", e);
+			}
+		}
+	}, []);
+
+	const handleSaveCustomSticker = (emojiOverride) => {
+		const emoji = (emojiOverride || customStickerInput || "").trim();
+		if (!emoji) return;
+		const label = (customStickerLabel || "").trim() || emoji;
+		const newSticker = {
+			id: emoji,
+			label: label,
+			subtitle: "My Custom Sticker",
+		};
+		const updated = [newSticker, ...savedCustomStickers.filter((s) => s.id !== emoji)];
+		setSavedCustomStickers(updated);
+		if (typeof window !== "undefined") {
+			localStorage.setItem("studio_custom_stickers", JSON.stringify(updated));
+		}
+		if (setStickerOverlay) setStickerOverlay(emoji);
+		if (setShowStickerOverlay) setShowStickerOverlay(true);
+		setStickerSavedToast(true);
+		setTimeout(() => setStickerSavedToast(false), 2000);
+	};
+
+	const handleDeleteCustomSticker = (indexToDelete, e) => {
+		if (e) e.stopPropagation();
+		const updated = savedCustomStickers.filter((_, idx) => idx !== indexToDelete);
+		setSavedCustomStickers(updated);
+		if (typeof window !== "undefined") {
+			localStorage.setItem("studio_custom_stickers", JSON.stringify(updated));
 		}
 	};
 
@@ -594,9 +712,12 @@ export default function CapCutMediaLibrary({
 					</div>
 
 					{/* BGM Track Selector & Preview */}
-					<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+					<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2.5">
 						<div className="flex items-center justify-between">
-							<span className="text-[11px] font-bold text-white">Copyright-Free BGM Tracks</span>
+							<span className="text-[11px] font-bold text-white flex items-center gap-1.5">
+								<Headphones className="w-3.5 h-3.5 text-[#00e5ff]" />
+								<span>Background Music (BGM)</span>
+							</span>
 							<label className="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer">
 								<span>Enable BGM:</span>
 								<input
@@ -608,11 +729,94 @@ export default function CapCutMediaLibrary({
 							</label>
 						</div>
 
+						{/* Custom Audio Upload & Save Button */}
+						<div className="p-2.5 bg-[#121c17] rounded-lg border border-emerald-500/40 flex flex-col gap-1.5">
+							<div className="flex items-center justify-between">
+								<span className="text-[10.5px] font-bold text-white flex items-center gap-1.5">
+									<Upload className="w-3.5 h-3.5 text-emerald-400" />
+									<span>আপলোড ও সেভ করুন (Custom Audio / BGM)</span>
+								</span>
+								{audioSavedToast && (
+									<span className="text-[9.5px] text-emerald-400 font-bold flex items-center gap-1 animate-in fade-in">
+										<Check className="w-3 h-3" /> Saved!
+									</span>
+								)}
+							</div>
+							<p className="text-[9.5px] text-slate-400">
+								আপনার কম্পিউটার থেকে পছন্দের যেকোনো MP3, WAV বা MP4 মিউজিক ফাইল আপলোড করে স্থায়ীভাবে সেভ করুন।
+							</p>
+							<label className="w-full py-1.5 px-3 bg-[#182620] hover:bg-[#20332b] text-emerald-300 border border-emerald-500/50 rounded flex items-center justify-center gap-2 text-[11px] font-bold cursor-pointer transition-all shadow-sm">
+								<Plus className="w-3.5 h-3.5 text-emerald-400" />
+								<span>{isUploadingAudio ? "Uploading Audio..." : "Upload New BGM Track"}</span>
+								<input
+									type="file"
+									accept="audio/*,video/mp4"
+									onChange={handleAudioFileUpload}
+									disabled={isUploadingAudio}
+									className="hidden"
+								/>
+							</label>
+						</div>
+
+						{/* My Saved Custom Audio Tracks */}
+						{savedCustomAudios.length > 0 && (
+							<div className="flex flex-col gap-1.5 pt-1">
+								<span className="text-[10px] font-bold text-emerald-300 flex items-center gap-1">
+									<BookmarkPlus className="w-3 h-3 text-emerald-400" />
+									<span>আমার সেভ করা BGM ({savedCustomAudios.length})</span>
+								</span>
+								<div className="flex flex-col gap-1.5">
+									{savedCustomAudios.map((track, idx) => (
+										<div
+											key={track.id}
+											onClick={() => {
+												if (setBgmTrackName) setBgmTrackName(track.id);
+												if (setBgmEnabled) setBgmEnabled(true);
+											}}
+											className={`group p-2 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${
+												bgmTrackName === track.id
+													? "bg-[#0b1b16] border-emerald-500 text-white shadow-md shadow-emerald-950/40"
+													: "bg-[#141518] border-[#212328] text-slate-300 hover:border-slate-500 hover:bg-[#1a1b20]"
+											}`}
+										>
+											<div className="flex items-center gap-2 truncate">
+												<span className={`w-2 h-2 rounded-full ${bgmTrackName === track.id ? "bg-emerald-400" : "bg-slate-600"}`} />
+												<div className="truncate">
+													<div className="text-[10.5px] font-bold truncate text-white">{track.name}</div>
+													<div className="text-[9px] text-emerald-400/80 font-mono">{track.mood}</div>
+												</div>
+											</div>
+											<div className="flex items-center gap-1 shrink-0">
+												{bgmTrackName === track.id && (
+													<span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">
+														Active
+													</span>
+												)}
+												<button
+													type="button"
+													onClick={(e) => handleDeleteCustomAudio(idx, e)}
+													className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity rounded"
+													title="Delete track"
+												>
+													<Trash2 className="w-3.5 h-3.5" />
+												</button>
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						)}
+
+						{/* Default Built-in BGM Tracks */}
 						<div className="flex flex-col gap-1.5 pt-1">
+							<span className="text-[10px] font-bold text-slate-400">Default Built-in BGM Tracks</span>
 							{bgmTracks.map((track) => (
 								<div
 									key={track.id}
-									onClick={() => setBgmTrackName(track.id)}
+									onClick={() => {
+										if (setBgmTrackName) setBgmTrackName(track.id);
+										if (setBgmEnabled) setBgmEnabled(true);
+									}}
 									className={`p-2 rounded border flex items-center justify-between cursor-pointer transition-all ${
 										bgmTrackName === track.id
 											? "bg-[#0c1417] border-[#00e5ff]/70 text-white"
@@ -844,43 +1048,206 @@ export default function CapCutMediaLibrary({
 							<Star className="w-3.5 h-3.5 text-[#00e5ff]" />
 							Animated Stickers & Reaction Memes
 						</span>
-						<label className="flex items-center gap-1 text-[10px] text-slate-300 cursor-pointer">
+						<label className="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer">
 							<span>Active:</span>
 							<input
 								type="checkbox"
 								checked={showStickerOverlay}
 								onChange={(e) => setShowStickerOverlay(e.target.checked)}
-								className="accent-[#00e5ff] w-3.5 h-3.5"
+								className="accent-[#00e5ff] w-3.5 h-3.5 cursor-pointer"
 							/>
 						</label>
 					</div>
 
-					<p className="text-[9.5px] text-slate-400">
-						Click any sticker to instantly superimpose it over the live video preview.
-					</p>
+					{/* Custom Sticker Creator & Saver */}
+					<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
+						<div className="flex items-center justify-between">
+							<span className="text-[10.5px] font-bold text-white flex items-center gap-1.5">
+								<Plus className="w-3.5 h-3.5 text-[#00e5ff]" />
+								<span>কাস্টম স্টিকার তৈরি ও সেভ করুন</span>
+							</span>
+							{stickerSavedToast && (
+								<span className="text-[9.5px] text-[#00e5ff] font-bold flex items-center gap-1 animate-in fade-in">
+									<Check className="w-3 h-3" /> Saved!
+								</span>
+							)}
+						</div>
 
-					<div className="grid grid-cols-2 gap-2.5">
-						{stickers.map((s) => (
+						<div className="flex items-center gap-2">
+							<input
+								type="text"
+								value={customStickerInput}
+								onChange={(e) => setCustomStickerInput(e.target.value)}
+								placeholder="Emoji or text (e.g. 💥, 🚨, SUBSCRIBE)"
+								className="flex-1 bg-[#121316] border border-[#2b2d35] rounded p-2 text-white text-[11px] focus:outline-none focus:border-[#00e5ff] font-bold"
+							/>
+							<input
+								type="text"
+								value={customStickerLabel}
+								onChange={(e) => setCustomStickerLabel(e.target.value)}
+								placeholder="Label (optional)"
+								className="w-24 bg-[#121316] border border-[#2b2d35] rounded p-2 text-white text-[11px] focus:outline-none focus:border-[#00e5ff]"
+							/>
 							<button
-								key={s.id}
 								type="button"
-								onClick={() => {
-									setStickerOverlay(s.id);
-									setShowStickerOverlay(true);
-								}}
-								className={`p-2.5 rounded-lg border flex items-center gap-2.5 cursor-pointer transition-all ${
-									stickerOverlay === s.id && showStickerOverlay
-										? "bg-[#0c1417] border-[#00e5ff] text-white shadow-md shadow-cyan-950"
-										: "bg-[#18191c] border-[#26282f] text-slate-300 hover:border-slate-500"
+								onClick={() => handleSaveCustomSticker()}
+								className="px-3 py-2 bg-[#00e5ff] hover:bg-[#33ebff] text-black font-extrabold text-[11px] rounded flex items-center gap-1 shrink-0 transition-all cursor-pointer shadow hover:scale-105"
+								title="Save sticker to your custom list"
+							>
+								<Save className="w-3.5 h-3.5" />
+								<span>Save</span>
+							</button>
+						</div>
+
+						{/* Quick 1-Click Emoji Selector Chips */}
+						<div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+							{["🔥", "😱", "🚨", "💥", "👇", "🎯", "⭐", "👑", "🎉", "⚡", "💯", "🛑"].map((emoji) => (
+								<button
+									key={emoji}
+									type="button"
+									onClick={() => {
+										setCustomStickerInput(emoji);
+										handleSaveCustomSticker(emoji);
+									}}
+									className="px-2 py-1 bg-[#141518] hover:bg-[#202227] border border-[#2b2d35] hover:border-[#00e5ff] rounded text-sm transition-all cursor-pointer"
+									title={`Add ${emoji}`}
+								>
+									{emoji}
+								</button>
+							))}
+						</div>
+					</div>
+
+					{/* My Saved Custom Stickers Section */}
+					{savedCustomStickers.length > 0 && (
+						<div className="flex flex-col gap-1.5">
+							<span className="text-[10px] font-bold text-[#00e5ff] flex items-center gap-1">
+								<BookmarkPlus className="w-3 h-3 text-[#00e5ff]" />
+								<span>আমার সেভ করা স্টিকার ({savedCustomStickers.length})</span>
+							</span>
+							<div className="grid grid-cols-2 gap-2">
+								{savedCustomStickers.map((s, idx) => (
+									<div
+										key={idx}
+										onClick={() => {
+											setStickerOverlay(s.id);
+											setShowStickerOverlay(true);
+										}}
+										className={`group p-2 rounded-lg border flex items-center justify-between cursor-pointer transition-all ${
+											stickerOverlay === s.id && showStickerOverlay
+												? "bg-[#0c1417] border-[#00e5ff] text-white shadow-md shadow-cyan-950"
+												: "bg-[#18191c] border-[#26282f] text-slate-300 hover:border-slate-500 hover:bg-[#1e2026]"
+										}`}
+									>
+										<div className="flex items-center gap-2 truncate">
+											<span className="text-xl">{s.id}</span>
+											<span className="text-[10.5px] font-bold truncate">{s.label}</span>
+										</div>
+										<button
+											type="button"
+											onClick={(e) => handleDeleteCustomSticker(idx, e)}
+											className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity rounded"
+											title="Delete sticker"
+										>
+											<Trash2 className="w-3.5 h-3.5" />
+										</button>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+
+					{/* Default Built-in Stickers */}
+					<div className="flex flex-col gap-1.5">
+						<span className="text-[10px] font-bold text-slate-400">Default Built-in Stickers</span>
+						<div className="grid grid-cols-2 gap-2">
+							{stickers.map((s) => (
+								<button
+									key={s.id}
+									type="button"
+									onClick={() => {
+										setStickerOverlay(s.id);
+										setShowStickerOverlay(true);
+									}}
+									className={`p-2 rounded-lg border flex items-center gap-2 cursor-pointer transition-all ${
+										stickerOverlay === s.id && showStickerOverlay
+											? "bg-[#0c1417] border-[#00e5ff] text-white shadow-md shadow-cyan-950"
+											: "bg-[#18191c] border-[#26282f] text-slate-300 hover:border-slate-500"
+									}`}
+								>
+									<span className="text-xl">{s.id}</span>
+									<div className="text-left truncate">
+										<div className="text-[10.5px] font-bold truncate">{s.label}</div>
+										<div className="text-[9px] text-slate-500 truncate">{s.subtitle}</div>
+									</div>
+								</button>
+							))}
+						</div>
+					</div>
+
+					{/* Position & Placement Controls for Sticker */}
+					<div className="p-2.5 rounded-lg border bg-[#141518] border-[#26282f] flex flex-col gap-2">
+						<div className="flex items-center justify-between text-[10.5px] font-bold text-white">
+							<div className="flex items-center gap-1.5">
+								<Move className="w-3.5 h-3.5 text-[#00e5ff]" />
+								<span>স্টিকার পজিশন (Placement)</span>
+							</div>
+							<span className="font-mono text-[#00e5ff] text-[9.5px] bg-[#1a1b20] px-1.5 py-0.5 rounded border border-[#2b2d35]">
+								X: {stickerPosition?.x ?? 85}% | Y: {stickerPosition?.y ?? 85}%
+							</span>
+						</div>
+
+						{/* Quick Placement Preset Buttons for Sticker */}
+						<div className="grid grid-cols-4 gap-1.5">
+							<button
+								type="button"
+								onClick={() => setStickerPosition && setStickerPosition({ x: 85, y: 15 })}
+								className={`py-1 px-1 rounded text-[9.5px] font-bold transition-all border cursor-pointer text-center ${
+									stickerPosition?.y <= 30 && stickerPosition?.x >= 60
+										? "bg-[#1a2d33] border-[#00e5ff] text-[#00e5ff]"
+										: "bg-[#1f2025] border-[#2b2d35] text-slate-300 hover:text-white"
 								}`}
 							>
-								<span className="text-2xl">{s.id}</span>
-								<div className="text-left">
-									<div className="text-[11px] font-bold">{s.label}</div>
-									<div className="text-[9px] text-slate-500">{s.subtitle}</div>
-								</div>
+								Top Right
 							</button>
-						))}
+							<button
+								type="button"
+								onClick={() => setStickerPosition && setStickerPosition({ x: 50, y: 50 })}
+								className={`py-1 px-1 rounded text-[9.5px] font-bold transition-all border cursor-pointer text-center ${
+									stickerPosition?.y > 30 && stickerPosition?.y < 70
+										? "bg-[#1a2d33] border-[#00e5ff] text-[#00e5ff]"
+										: "bg-[#1f2025] border-[#2b2d35] text-slate-300 hover:text-white"
+								}`}
+							>
+								Center
+							</button>
+							<button
+								type="button"
+								onClick={() => setStickerPosition && setStickerPosition({ x: 15, y: 85 })}
+								className={`py-1 px-1 rounded text-[9.5px] font-bold transition-all border cursor-pointer text-center ${
+									stickerPosition?.y >= 70 && stickerPosition?.x <= 40
+										? "bg-[#1a2d33] border-[#00e5ff] text-[#00e5ff]"
+										: "bg-[#1f2025] border-[#2b2d35] text-slate-300 hover:text-white"
+								}`}
+							>
+								Bottom Left
+							</button>
+							<button
+								type="button"
+								onClick={() => setStickerPosition && setStickerPosition({ x: 85, y: 85 })}
+								className={`py-1 px-1 rounded text-[9.5px] font-bold transition-all border cursor-pointer text-center ${
+									stickerPosition?.y >= 70 && stickerPosition?.x >= 60
+										? "bg-[#1a2d33] border-[#00e5ff] text-[#00e5ff]"
+										: "bg-[#1f2025] border-[#2b2d35] text-slate-300 hover:text-white"
+								}`}
+							>
+								Bottom Right
+							</button>
+						</div>
+
+						<p className="text-[9.5px] text-slate-400 leading-normal pt-0.5">
+							💡 <strong>টিপ:</strong> প্লেয়ারের স্ক্রিনে স্টিকারটি মাউস দিয়ে চেপে ধরে ড্র্যাগ (Drag) করে যেকোনো পজিশনে টেনে বসাতে পারবেন।
+						</p>
 					</div>
 				</div>
 			)}

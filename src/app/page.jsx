@@ -71,6 +71,7 @@ export default function CapCutStudio() {
 	const [textPosition, setTextPosition] = useState({ x: 50, y: 12 }); // {x: %, y: %}
 	const [stickerOverlay, setStickerOverlay] = useState("🧸");
 	const [showStickerOverlay, setShowStickerOverlay] = useState(false);
+	const [stickerPosition, setStickerPosition] = useState({ x: 85, y: 85 }); // {x: %, y: %}
 	const [activeTransition, setActiveTransition] = useState("crossfade");
 	const [activeTopTab, setActiveTopTab] = useState("media");
 
@@ -272,6 +273,10 @@ export default function CapCutStudio() {
 					textOverlay,
 					showTextOverlay,
 					textPosition,
+					// Sticker Overlay
+					stickerOverlay,
+					showStickerOverlay,
+					stickerPosition,
 				}),
 			});
 
@@ -407,6 +412,8 @@ export default function CapCutStudio() {
 						setStickerOverlay={setStickerOverlay}
 						showStickerOverlay={showStickerOverlay}
 						setShowStickerOverlay={setShowStickerOverlay}
+						stickerPosition={stickerPosition}
+						setStickerPosition={setStickerPosition}
 						// Effects & Transitions
 						applyZoom={applyZoom}
 						setApplyZoom={setApplyZoom}
@@ -447,6 +454,8 @@ export default function CapCutStudio() {
 						setTextPosition={setTextPosition}
 						stickerOverlay={stickerOverlay}
 						showStickerOverlay={showStickerOverlay}
+						stickerPosition={stickerPosition}
+						setStickerPosition={setStickerPosition}
 						currentTime={currentTime}
 						duration={duration}
 						onTimeUpdate={(t) => setCurrentTime(t)}

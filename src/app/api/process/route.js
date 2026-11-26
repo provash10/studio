@@ -39,6 +39,10 @@ export async function POST(request) {
 			textOverlay = "",
 			showTextOverlay = false,
 			textPosition = { x: 50, y: 12 },
+			// Sticker Overlay Props
+			stickerOverlay = "",
+			showStickerOverlay = false,
+			stickerPosition = { x: 85, y: 85 },
 		} = data;
 
 		if (!filename) {
@@ -137,12 +141,25 @@ export async function POST(request) {
 		// Input 1 (Optional): BGM Track (looped)
 		let bgmInputIdx = -1;
 		if (bgmEnabled && bgmTrackName) {
-			const bgmPath = path.join(bgmDir, bgmTrackName);
+			let bgmPath = path.join(bgmDir, bgmTrackName);
+			let foundBgm = false;
 			try {
 				await fs.access(bgmPath);
+				foundBgm = true;
+			} catch {
+				// Check uploadDir for custom uploaded audio
+				const customUploadPath = path.join(uploadDir, bgmTrackName);
+				try {
+					await fs.access(customUploadPath);
+					bgmPath = customUploadPath;
+					foundBgm = true;
+				} catch {}
+			}
+
+			if (foundBgm) {
 				ffmpegArgs.push("-stream_loop", "-1", "-i", bgmPath);
 				bgmInputIdx = currentInputIndex++;
-			} catch (e) {
+			} else {
 				console.warn("BGM track not found, skipping BGM input:", bgmPath);
 			}
 		}
@@ -247,6 +264,24 @@ export async function POST(request) {
 				`${baseV}drawtext=text='${safeText}':fontcolor=yellow:fontsize=${fontSize}:box=1:boxcolor=black@0.85:boxborderw=12:x='(w-text_w)*(${posX}/100)':y='(h-text_h)*(${posY}/100)'[vtext]`,
 			);
 			baseV = "[vtext]";
+		}
+
+		// 6.6 Draw Sticker Overlay (Draggable Emoji / Reaction Meme)
+		if (showStickerOverlay && stickerOverlay) {
+			const sPosX = Math.max(5, Math.min(95, Number(stickerPosition?.x ?? 85)));
+			const sPosY = Math.max(5, Math.min(95, Number(stickerPosition?.y ?? 85)));
+			const sSize = Math.max(32, Math.round(tH * 0.055));
+
+			const safeSticker = String(stickerOverlay)
+				.replace(/\\/g, "\\\\")
+				.replace(/'/g, "'\\''")
+				.replace(/:/g, "\\:")
+				.replace(/%/g, "\\%");
+
+			filters.push(
+				`${baseV}drawtext=text='${safeSticker}':fontsize=${sSize}:x='(w-text_w)*(${sPosX}/100)':y='(h-text_h)*(${sPosY}/100)'[vstick]`,
+			);
+			baseV = "[vstick]";
 		}
 
 		// Calculate target duration adjusted for video speed so FFmpeg never loops indefinitely
