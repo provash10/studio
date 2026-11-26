@@ -424,7 +424,7 @@ export default function CapCutPlayer({
 						</div>
 					)}
 
-					{/* Text Overlay (Hook / Captions) - 100% Freely Draggable & Positioned */}
+					{/* Text Overlay (Hook / Captions) - 100% Freely Draggable & Fixed Rigid Box */}
 					{showTextOverlay && textOverlay && !isCopyrightFreeActive && (
 						<div
 							onMouseDown={handleTextMouseDown}
@@ -435,19 +435,25 @@ export default function CapCutPlayer({
 								top: `${textPosition?.y ?? 12}%`,
 								transform: `translate(-50%, -50%) scale(${textScale ?? 1.0})`,
 								transformOrigin: "center center",
+								whiteSpace: "nowrap",
+								width: "max-content",
+								maxWidth: "none",
+								transition: isDraggingText ? "none" : "box-shadow 0.15s ease",
 							}}
-							className={`z-30 select-none px-3.5 py-1.5 bg-black/85 rounded-md border-2 border-yellow-400 text-yellow-300 font-extrabold text-xs sm:text-sm tracking-wide text-center uppercase shadow-2xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] max-w-[90%] transition-shadow cursor-grab active:cursor-grabbing group hover:border-[#00e5ff] hover:shadow-[0_0_15px_rgba(0,229,255,0.5)] ${
+							className={`z-30 select-none px-3.5 py-1.5 bg-black/85 rounded-md border-2 border-yellow-400 text-yellow-300 font-extrabold text-xs sm:text-sm tracking-wide text-center uppercase shadow-2xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] whitespace-nowrap w-max cursor-grab active:cursor-grabbing group hover:border-[#00e5ff] hover:shadow-[0_0_15px_rgba(0,229,255,0.5)] ${
 								isDraggingText ? "cursor-grabbing border-[#00e5ff] shadow-[0_0_20px_rgba(0,229,255,0.7)] ring-2 ring-[#00e5ff]" : ""
 							}`}
 							title="মাউস দিয়ে চেপে ধরে ড্র্যাগ করে পজিশন পরিবর্তন করুন"
 						>
-							<div className="flex items-center gap-1.5 pointer-events-none">
+							<div className="flex items-center gap-1.5 pointer-events-none whitespace-nowrap">
 								<span className="text-[10px] text-[#00e5ff] opacity-80 font-mono">✥</span>
-								<span>{textOverlay}</span>
+								<span className="whitespace-nowrap">{textOverlay}</span>
 							</div>
 
-							{/* Coordinate & Size Resize Tooltip */}
-							<div className="absolute -bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity bg-black/95 text-[#00e5ff] text-[9px] font-mono px-2 py-0.5 rounded-full border border-[#00e5ff]/50 whitespace-nowrap shadow-lg flex items-center gap-1.5 z-40">
+							{/* Coordinate & Size Resize Tooltip (hidden while dragging to avoid lag/flicker) */}
+							<div className={`absolute -bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto bg-black/95 text-[#00e5ff] text-[9px] font-mono px-2 py-0.5 rounded-full border border-[#00e5ff]/50 whitespace-nowrap shadow-lg flex items-center gap-1.5 z-40 ${
+								isDraggingText ? "hidden pointer-events-none" : "opacity-0 group-hover:opacity-100 transition-opacity"
+							}`}>
 								<button
 									type="button"
 									onClick={(e) => {
@@ -475,7 +481,7 @@ export default function CapCutPlayer({
 						</div>
 					)}
 
-					{/* Sticker Overlay (Reaction Meme) - Freely Draggable & Scalable */}
+					{/* Sticker Overlay (Reaction Meme) - Freely Draggable & Fixed Rigid Box */}
 					{showStickerOverlay && stickerOverlay && !isCopyrightFreeActive && (
 						<div
 							onMouseDown={handleStickerMouseDown}
@@ -486,18 +492,24 @@ export default function CapCutPlayer({
 								top: `${stickerPosition?.y ?? 85}%`,
 								transform: `translate(-50%, -50%) scale(${stickerScale ?? 1.0})`,
 								transformOrigin: "center center",
+								whiteSpace: "nowrap",
+								width: "max-content",
+								maxWidth: "none",
+								transition: isDraggingSticker ? "none" : "transform 0.15s ease",
 							}}
-							className={`z-30 select-none text-2xl sm:text-3xl filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)] cursor-grab active:cursor-grabbing group transition-transform ${
+							className={`z-30 select-none text-2xl sm:text-3xl filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.85)] cursor-grab active:cursor-grabbing group whitespace-nowrap w-max ${
 								isDraggingSticker ? "cursor-grabbing" : "hover:scale-105"
 							}`}
 							title="মাউস দিয়ে টেনে স্টিকারের পজিশন পরিবর্তন করুন"
 						>
-							<div className="relative pointer-events-none flex items-center justify-center">
-								<span>{stickerOverlay}</span>
+							<div className="relative pointer-events-none flex items-center justify-center whitespace-nowrap">
+								<span className="whitespace-nowrap">{stickerOverlay}</span>
 							</div>
 
-							{/* Coordinate & Size Resize Tooltip for Sticker */}
-							<div className="absolute -bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto opacity-0 group-hover:opacity-100 transition-opacity bg-black/95 text-[#00e5ff] text-[8.5px] font-mono px-2 py-0.5 rounded-full border border-[#00e5ff]/50 whitespace-nowrap shadow-lg flex items-center gap-1.5 z-40">
+							{/* Coordinate & Size Resize Tooltip for Sticker (hidden while dragging) */}
+							<div className={`absolute -bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto bg-black/95 text-[#00e5ff] text-[8.5px] font-mono px-2 py-0.5 rounded-full border border-[#00e5ff]/50 whitespace-nowrap shadow-lg flex items-center gap-1.5 z-40 ${
+								isDraggingSticker ? "hidden pointer-events-none" : "opacity-0 group-hover:opacity-100 transition-opacity"
+							}`}>
 								<button
 									type="button"
 									onClick={(e) => {
