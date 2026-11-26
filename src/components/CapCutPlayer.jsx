@@ -217,6 +217,14 @@ export default function CapCutPlayer({
 					className={`relative bg-black flex items-center justify-center shadow-2xl transition-all duration-150 border border-[#232429] ${
 						aspectRatio === "9:16"
 							? "h-full max-h-[380px] aspect-[9/16]"
+							: aspectRatio === "1:1"
+							? "h-full max-h-[380px] aspect-square"
+							: aspectRatio === "4:3"
+							? "h-full max-h-[380px] aspect-[4/3]"
+							: aspectRatio === "3:4"
+							? "h-full max-h-[380px] aspect-[3/4]"
+							: aspectRatio === "21:9"
+							? "w-full max-w-[620px] aspect-[21/9]"
 							: "w-full max-w-[620px] aspect-[16/9]"
 					}`}
 				>
@@ -397,8 +405,12 @@ export default function CapCutPlayer({
 							onChange={(e) => setAspectRatio(e.target.value)}
 							className="bg-transparent text-slate-200 text-[11px] font-medium focus:outline-none cursor-pointer"
 						>
-							<option value="9:16">9:16 (Shorts)</option>
-							<option value="16:9">16:9 (Landscape)</option>
+							<option value="9:16">📱 9:16 (Shorts / Reels)</option>
+							<option value="16:9">🖥️ 16:9 (Long Video)</option>
+							<option value="1:1">⬛ 1:1 (Square Post)</option>
+							<option value="4:3">📺 4:3 (Classic Video)</option>
+							<option value="3:4">📄 3:4 (Portrait)</option>
+							<option value="21:9">🎬 21:9 (Cinematic)</option>
 						</select>
 					</div>
 

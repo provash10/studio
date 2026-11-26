@@ -96,11 +96,25 @@ export async function POST(request) {
 			tH = 720;
 		}
 
-		// Aspect ratio switch: 16:9 vs 9:16 Shorts
+		// Aspect ratio canvas calculations: 9:16 (Shorts), 16:9 (Long), 1:1 (Square), 4:3, 3:4, 21:9
 		if (aspectRatio === "9:16") {
-			const temp = tW;
-			tW = tH;
-			tH = temp;
+			tW = 1080;
+			tH = 1920;
+		} else if (aspectRatio === "1:1") {
+			tW = 1080;
+			tH = 1080;
+		} else if (aspectRatio === "4:3") {
+			tW = 1440;
+			tH = 1080;
+		} else if (aspectRatio === "3:4") {
+			tW = 1080;
+			tH = 1440;
+		} else if (aspectRatio === "21:9") {
+			tW = 2560;
+			tH = 1080;
+		} else {
+			tW = 1920;
+			tH = 1080;
 		}
 
 		const ffmpegArgs = [];
