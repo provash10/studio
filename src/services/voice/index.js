@@ -12,7 +12,7 @@ import voicesCatalog from "./voices.json";
 export async function generateSpeech({
 	text,
 	provider = "edge", // 'edge', 'elevenlabs', 'system', 'auto'
-	voice = "bn-BD-PradeepNeural",
+	voice = "en-US-ChristopherNeural",
 	apiKey,
 	rate = 1.0,
 	outputDir = path.join(process.cwd(), "public", "temp"),
@@ -50,7 +50,7 @@ export async function generateSpeech({
 	try {
 		await synthesizeEdgeTTS({
 			text,
-			voice: voice.includes("Neural") ? voice : "bn-BD-PradeepNeural",
+			voice: voice.includes("Neural") ? voice : "en-US-ChristopherNeural",
 			rate,
 			outputPath,
 		});
@@ -59,7 +59,7 @@ export async function generateSpeech({
 			fileName,
 			url: `/temp/${fileName}`,
 			provider: "edge-tts",
-			voice: voice.includes("Neural") ? voice : "bn-BD-PradeepNeural",
+			voice: voice.includes("Neural") ? voice : "en-US-ChristopherNeural",
 		};
 	} catch (edgeErr) {
 		console.warn("Edge-TTS error, trying System TTS fallback:", edgeErr.message);

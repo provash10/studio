@@ -46,7 +46,7 @@ export default function CapCutInspector({
 	setBgmEnabled,
 	bgmTrackName,
 	setBgmTrackName,
-	bgmVolume,
+	bgmVolume = 0.12,
 	setBgmVolume,
 	metadataClean = true,
 	setMetadataClean,
@@ -54,11 +54,11 @@ export default function CapCutInspector({
 	setVoiceoverEnabled,
 	voiceoverFileName,
 	setVoiceoverFileName,
-	voiceoverVolume,
+	voiceoverVolume = 1.4,
 	setVoiceoverVolume,
 	voiceProvider = "edge",
 	setVoiceProvider,
-	selectedVoice = "bn-BD-PradeepNeural",
+	selectedVoice = "en-US-ChristopherNeural",
 	setSelectedVoice,
 	voiceRate = 1.0,
 	setVoiceRate,
@@ -333,9 +333,9 @@ export default function CapCutInspector({
 									className="w-full bg-[#182620] border border-emerald-500/40 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#00e5ff] cursor-pointer"
 								>
 									<optgroup label="Free AI Voice (Edge-TTS - m turbo ডিফল্ট)">
+										<option value="en-US-ChristopherNeural">🇺🇸 English - Christopher (ভাইরাল মেল - Default)</option>
 										<option value="bn-BD-PradeepNeural">🇧🇩 Bangla - Pradeep (ছেলে কণ্ঠ)</option>
 										<option value="bn-BD-NabanitaNeural">🇧🇩 Bangla - Nabanita (মেয়ে কণ্ঠ)</option>
-										<option value="en-US-ChristopherNeural">🇺🇸 English - Christopher (ভাইরাল মেল)</option>
 										<option value="en-US-JennyNeural">🇺🇸 English - Jenny (ভাইরাল ফিমেল)</option>
 										<option value="en-US-GuyNeural">🇺🇸 English - Guy (ডিপ মেল)</option>
 										<option value="hi-IN-MadhurNeural">🇮🇳 Hindi - Madhur (হিন্দি মেল)</option>
@@ -826,7 +826,7 @@ export default function CapCutInspector({
 									type="button"
 									onClick={() => {
 										setVoiceProvider && setVoiceProvider("edge");
-										setSelectedVoice && setSelectedVoice("bn-BD-PradeepNeural");
+										setSelectedVoice && setSelectedVoice("en-US-ChristopherNeural");
 									}}
 									className={`py-1 rounded text-[10px] font-bold transition-all cursor-pointer ${
 										voiceProvider === "edge"
@@ -876,9 +876,9 @@ export default function CapCutInspector({
 								>
 									{voiceProvider === "edge" && (
 										<>
+											<option value="en-US-ChristopherNeural">🇺🇸 English - Christopher (Male Viral)</option>
 											<option value="bn-BD-PradeepNeural">🇧🇩 Bangla - Pradeep (Male)</option>
 											<option value="bn-BD-NabanitaNeural">🇧🇩 Bangla - Nabanita (Female)</option>
-											<option value="en-US-ChristopherNeural">🇺🇸 English - Christopher (Male Viral)</option>
 											<option value="en-US-JennyNeural">🇺🇸 English - Jenny (Female Viral)</option>
 											<option value="en-US-GuyNeural">🇺🇸 English - Guy (Deep Male)</option>
 											<option value="hi-IN-MadhurNeural">🇮🇳 Hindi - Madhur (Male)</option>

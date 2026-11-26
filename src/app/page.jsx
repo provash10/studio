@@ -62,7 +62,7 @@ export default function CapCutStudio() {
 	const [muteOriginalAudio, setMuteOriginalAudio] = useState(true); // 100% Mute for zero copyright
 	const [bgmEnabled, setBgmEnabled] = useState(true);
 	const [bgmTrackName, setBgmTrackName] = useState("bg3.mp4");
-	const [bgmVolume, setBgmVolume] = useState(0.25);
+	const [bgmVolume, setBgmVolume] = useState(0.12);
 	const [metadataClean, setMetadataClean] = useState(true);
 
 	// Text & Sticker Overlays
@@ -80,9 +80,9 @@ export default function CapCutStudio() {
 	// Voiceover States
 	const [voiceoverEnabled, setVoiceoverEnabled] = useState(true);
 	const [voiceoverFileName, setVoiceoverFileName] = useState(null);
-	const [voiceoverVolume, setVoiceoverVolume] = useState(1.2);
+	const [voiceoverVolume, setVoiceoverVolume] = useState(1.4);
 	const [voiceProvider, setVoiceProvider] = useState("edge"); // 'edge' (free), 'elevenlabs' (paid), 'system'
-	const [selectedVoice, setSelectedVoice] = useState("bn-BD-PradeepNeural");
+	const [selectedVoice, setSelectedVoice] = useState("en-US-ChristopherNeural");
 	const [voiceRate, setVoiceRate] = useState(1.10); // 1.10x speech rate matched to video speed
 	const [videoSpeed, setVideoSpeed] = useState(1.10); // 1.10x video speed boost
 	const [syncVoiceSpeed, setSyncVoiceSpeed] = useState(true);
@@ -190,8 +190,8 @@ export default function CapCutStudio() {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
-							prompt: videoTitle || "ভিডিওটির ড্রামাটিক ক্লাইম্যাক্স ও আকর্ষণীয় ধারাভাষ্য",
-							language: "bn",
+							prompt: videoTitle || (selectedVoice.startsWith("bn-") ? "ভিডিওটির ড্রামাটিক ক্লাইম্যাক্স ও আকর্ষণীয় ধারাভাষ্য" : "Dramatic viral commentary of this scene"),
+							language: selectedVoice.startsWith("bn-") ? "bn" : "en",
 							provider: "auto",
 							videoTitle,
 							videoFilename,
@@ -205,7 +205,9 @@ export default function CapCutStudio() {
 				}
 
 				if (!script) {
-					script = "Wait until you see what happens next in this incredible video! Watch closely right now!";
+					script = selectedVoice.startsWith("bn-")
+						? "এই ভিডিওটির শেষ পর্যন্ত দেখুন, যা ঘটবে তা আপনার কল্পনার বাইরে!"
+						: "Wait until you see what happens next in this incredible video! Watch closely right now!";
 				}
 
 				setCreatingStatus("2/3 Synthesizing AI voiceover...");
@@ -266,11 +268,11 @@ export default function CapCutStudio() {
 					stereoDelay: 20,
 					bgmEnabled: true,
 					bgmTrackName: bgmTrackName || "bg3.mp4",
-					bgmVolume: 0.25,
+					bgmVolume: currentVoice ? 0.12 : (bgmVolume || 0.25),
 					metadataClean: true,
 					voiceoverEnabled: Boolean(currentVoice),
 					voiceoverFileName: currentVoice,
-					voiceoverVolume: 1.25,
+					voiceoverVolume: voiceoverVolume || 1.4,
 					// Text Overlay
 					textOverlay,
 					showTextOverlay,

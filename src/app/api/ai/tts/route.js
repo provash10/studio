@@ -46,7 +46,7 @@ export async function POST(request) {
 		const {
 			text,
 			provider = "auto", // 'auto', 'edge', 'elevenlabs', 'system'
-			voice = "bn-BD-PradeepNeural",
+			voice = "en-US-ChristopherNeural",
 			voiceId,
 			apiKey,
 			rate = 1.0,

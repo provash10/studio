@@ -327,16 +327,21 @@ export async function POST(request) {
 			audioMixLabels.push("[aorig]");
 		}
 
-		// (b) BGM Track
+		// (b) BGM Track (ducked when voiceover is present so narration is crystal clear)
 		if (bgmInputIdx !== -1) {
-			const bVol = Number.parseFloat(bgmVolume) || 0.25;
+			let bVol = Number.parseFloat(bgmVolume);
+			if (Number.isNaN(bVol) || bVol <= 0) {
+				bVol = voiceInputIdx !== -1 ? 0.12 : 0.25;
+			} else if (voiceInputIdx !== -1 && bVol > 0.15) {
+				bVol = 0.12; // Lower BGM volume when voiceover is present
+			}
 			filters.push(`[${bgmInputIdx}:a]volume=${bVol.toFixed(2)}[abgm]`);
 			audioMixLabels.push("[abgm]");
 		}
 
-		// (c) Voiceover Track
+		// (c) Voiceover Track (boosted for crisp and clear speech)
 		if (voiceInputIdx !== -1) {
-			const vVol = Number.parseFloat(voiceoverVolume) || 1.2;
+			const vVol = Number.parseFloat(voiceoverVolume) || 1.4;
 			filters.push(`[${voiceInputIdx}:a]volume=${vVol.toFixed(2)}[avoice]`);
 			audioMixLabels.push("[avoice]");
 		}
