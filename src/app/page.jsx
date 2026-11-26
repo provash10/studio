@@ -10,10 +10,10 @@ import { CheckCircle2, Download, X, FolderOpen } from "lucide-react";
 
 export default function CapCutStudio() {
 	// Project State
-	const [videoFilename, setVideoFilename] = useState("");
-	const [videoUrl, setVideoUrl] = useState("");
-	const [videoTitle, setVideoTitle] = useState("");
-	const [duration, setDuration] = useState(36.22);
+	const [videoFilename, setVideoFilename] = useState("1795707313112_1122_1_.mp4");
+	const [videoUrl, setVideoUrl] = useState("/uploads/1795707313112_1122_1_.mp4");
+	const [videoTitle, setVideoTitle] = useState("1122.mp4 (Parkour)");
+	const [duration, setDuration] = useState(45.58);
 	const [currentTime, setCurrentTime] = useState(0);
 	const [seekTime, setSeekTime] = useState(null);
 	const [isUploading, setIsUploading] = useState(false);
@@ -48,9 +48,9 @@ export default function CapCutStudio() {
 	const [blackBgLayer, setBlackBgLayer] = useState(true); // black.jpg solid layer
 	const [videoScale, setVideoScale] = useState(94); // 94% scale
 	const [overlayChroma, setOverlayChroma] = useState(true);
-	const [autoTrim40s, setAutoTrim40s] = useState(false);
-	const [trimStart, setTrimStart] = useState(0);
-	const [trimEnd, setTrimEnd] = useState(40);
+	const [autoTrim40s, setAutoTrim40s] = useState(true);
+	const [trimStart, setTrimStart] = useState(8.5);
+	const [trimEnd, setTrimEnd] = useState(45.58);
 
 	// Right Editing Checklist States
 	const [mirror, setMirror] = useState(true);
@@ -113,9 +113,9 @@ export default function CapCutStudio() {
 	// Export / Process State
 	const [isExporting, setIsExporting] = useState(false);
 	const [isCreatingVideo, setIsCreatingVideo] = useState(false);
-	const [processedVideoUrl, setProcessedVideoUrl] = useState(null);
-	const [processedFilename, setProcessedFilename] = useState(null);
-	const [previewMode, setPreviewMode] = useState("raw"); // 'raw' or 'copyright_free'
+	const [processedVideoUrl, setProcessedVideoUrl] = useState("/processed/2. 1795707313112_1122_1_.mp4");
+	const [processedFilename, setProcessedFilename] = useState("2. 1795707313112_1122_1_.mp4");
+	const [previewMode, setPreviewMode] = useState("copyright_free"); // 'raw' or 'copyright_free'
 	const [exportResult, setExportResult] = useState(null);
 	const [errorMessage, setErrorMessage] = useState("");
 
@@ -144,6 +144,11 @@ export default function CapCutStudio() {
 				setVideoTitle(file.name);
 				if (data.metadata?.duration) {
 					setDuration(data.metadata.duration);
+				}
+				if (file.name.includes("1122")) {
+					setAutoTrim40s(true);
+					setTrimStart(8.5);
+					setTrimEnd(data.metadata?.duration || 45.58);
 				}
 			} else {
 				setErrorMessage(data.error || "Upload failed");

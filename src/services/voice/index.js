@@ -1,9 +1,12 @@
 import path from "path";
 import fs from "fs";
-import { synthesizeEdgeTTS } from "./edgeTTS";
-import { synthesizeElevenLabs } from "./elevenLabs";
-import { synthesizeSystemTTS } from "./systemTTS";
-import voicesCatalog from "./voices.json";
+import { synthesizeEdgeTTS } from "./edgeTTS.js";
+import { synthesizeElevenLabs } from "./elevenLabs.js";
+import { synthesizeSystemTTS } from "./systemTTS.js";
+
+const voicesCatalog = JSON.parse(
+	fs.readFileSync(new URL("./voices.json", import.meta.url), "utf-8")
+);
 
 /**
  * Unified Voice Service Hub
