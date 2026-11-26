@@ -306,6 +306,49 @@ export default function CapCutInspector({
 								</div>
 							</div>
 
+							{/* Quick Voice Selector right in Auto Mode */}
+							<div className="bg-[#121c17] p-2.5 rounded-lg border border-emerald-500/30 flex flex-col gap-1.5">
+								<div className="flex items-center justify-between text-[11px] font-bold text-white">
+									<div className="flex items-center gap-1.5">
+										<Volume2 className="w-3.5 h-3.5 text-[#00e5ff]" />
+										<span>ভয়েস ক্যারেক্টার সিলেক্ট করুন (m turbo Voices):</span>
+									</div>
+									<span className="text-[9.5px] text-emerald-400 font-mono">
+										{voiceProvider === "edge" ? "Free" : "Premium"}
+									</span>
+								</div>
+								<select
+									value={selectedVoice}
+									onChange={(e) => {
+										const val = e.target.value;
+										if (setSelectedVoice) setSelectedVoice(val);
+										if (val.startsWith("bn-") || val.startsWith("en-") || val.startsWith("hi-")) {
+											if (setVoiceProvider) setVoiceProvider("edge");
+										} else if (val === "system-default") {
+											if (setVoiceProvider) setVoiceProvider("system");
+										} else {
+											if (setVoiceProvider) setVoiceProvider("elevenlabs");
+										}
+									}}
+									className="w-full bg-[#182620] border border-emerald-500/40 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-[#00e5ff] cursor-pointer"
+								>
+									<optgroup label="Free AI Voice (Edge-TTS - m turbo ডিফল্ট)">
+										<option value="bn-BD-PradeepNeural">🇧🇩 Bangla - Pradeep (ছেলে কণ্ঠ)</option>
+										<option value="bn-BD-NabanitaNeural">🇧🇩 Bangla - Nabanita (মেয়ে কণ্ঠ)</option>
+										<option value="en-US-ChristopherNeural">🇺🇸 English - Christopher (ভাইরাল মেল)</option>
+										<option value="en-US-JennyNeural">🇺🇸 English - Jenny (ভাইরাল ফিমেল)</option>
+										<option value="en-US-GuyNeural">🇺🇸 English - Guy (ডিপ মেল)</option>
+										<option value="hi-IN-MadhurNeural">🇮🇳 Hindi - Madhur (হিন্দি মেল)</option>
+									</optgroup>
+									<optgroup label="Premium AI Voice (ElevenLabs / Paid)">
+										<option value="21m00Tcm4TlvDq8ikWAM">💎 Rachel (শান্ত ও ন্যাচারাল)</option>
+										<option value="pNInz6obpgDQGcFmaJgB">💎 Adam (ভাইরাল ডিপ ভয়েস)</option>
+										<option value="ErXwobaYiN019PkySvjV">💎 Antoni (স্টোরিটেলিং)</option>
+										<option value="EXAVITQu4vr4xnSDxMaL">💎 Bella (এনার্জেটিক)</option>
+									</optgroup>
+								</select>
+							</div>
+
 							<div className="flex flex-col gap-2 pt-1">
 								<button
 									type="button"
