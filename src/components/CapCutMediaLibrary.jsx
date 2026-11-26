@@ -62,6 +62,8 @@ export default function CapCutMediaLibrary({
 	setTrimStart,
 	trimEnd = 40,
 	setTrimEnd,
+	cliffhangerHook = { enabled: false, start: 40.5, end: 43.0, text: "WAIT FOR IT... 🔥" },
+	setCliffhangerHook,
 	// Active Top Tab
 	activeTopTab = "media",
 	setActiveTopTab,
@@ -751,6 +753,115 @@ export default function CapCutMediaLibrary({
 													/>
 												</div>
 											</div>
+										</div>
+
+										{/* Item 5: Action Cliffhanger Hook (Option 3: Stitches thrilling peak stunt to front with WAIT FOR IT... banner) */}
+										<div className={`p-2.5 rounded-lg border transition-all ${cliffhangerHook?.enabled ? "bg-[#1f1505] border-amber-500/80 shadow" : "bg-[#18191c] border-[#26282f]"}`}>
+											<div className="flex items-center justify-between">
+												<div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-300">
+													<span>🔥 উপায় ৩: অ্যাকশন ক্লিফহ্যাঙ্গার হুক</span>
+													<span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded font-mono">
+														{cliffhangerHook?.enabled ? "সক্রিয়" : "বন্ধ"}
+													</span>
+												</div>
+												<label className="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer">
+													<input
+														type="checkbox"
+														checked={Boolean(cliffhangerHook?.enabled)}
+														onChange={(e) => {
+															const checked = e.target.checked;
+															if (setCliffhangerHook) {
+																setCliffhangerHook(prev => ({
+																	...(prev || {}),
+																	enabled: checked,
+																	start: prev?.start || 40.5,
+																	end: prev?.end || 43.0,
+																	text: prev?.text || "WAIT FOR IT... 🔥",
+																}));
+															}
+															if (checked) {
+																setAutoTrim40s(true);
+																setTrimStart(8.5);
+															}
+														}}
+														className="accent-amber-400 w-3.5 h-3.5 cursor-pointer"
+													/>
+													<span className="font-bold text-amber-400">{cliffhangerHook?.enabled ? "সক্রিয়" : "বন্ধ"}</span>
+												</label>
+											</div>
+											<p className="text-[9.5px] text-slate-300 mt-1 leading-snug">
+												ডিমের অপ্রাসঙ্গিক ক্লিপের বদলে ভিডিওর সবচেয়ে রোমাঞ্চকর ব্যাকফ্লিপ স্টান্ট (৪০.৫ সে. - ৪৩ সে.) শুরুতে এনে &ldquo;WAIT FOR IT... 🔥&rdquo; ব্যানার দিয়ে দর্শকদের আটকে রাখা হবে!
+											</p>
+
+											<button
+												type="button"
+												onClick={() => {
+													if (setCliffhangerHook) {
+														setCliffhangerHook({
+															enabled: true,
+															start: 40.5,
+															end: 43.0,
+															text: "WAIT FOR IT... 🔥",
+														});
+													}
+													setAutoTrim40s(true);
+													setTrimStart(8.5);
+													setTrimEnd(duration || 45.58);
+												}}
+												className={`mt-2 w-full py-1.5 px-2 rounded text-[10.5px] font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+													cliffhangerHook?.enabled
+														? "bg-amber-400 text-black border-amber-400 shadow font-extrabold"
+														: "bg-[#251d10] text-amber-300 border-amber-500/50 hover:bg-amber-400 hover:text-black"
+												}`}
+											>
+												<span>⚡ ১-ক্লিকে উপায় ৩ প্রয়োগ করুন (সেরা পার্কোর হুক)</span>
+											</button>
+
+											{cliffhangerHook?.enabled && (
+												<div className="mt-2 pt-2 border-t border-amber-500/20 flex flex-col gap-2">
+													<div className="flex items-center justify-between text-[9.5px]">
+														<span className="text-slate-300">হুক টেক্সট (Hook Text):</span>
+														<input
+															type="text"
+															value={cliffhangerHook?.text || "WAIT FOR IT... 🔥"}
+															onChange={(e) => setCliffhangerHook(prev => ({ ...(prev || {}), text: e.target.value }))}
+															className="bg-[#121316] border border-amber-500/40 text-amber-300 px-2 py-0.5 rounded text-[10px] w-40 text-center font-bold"
+														/>
+													</div>
+													<div className="grid grid-cols-2 gap-2 text-[9.5px]">
+														<div className="flex flex-col gap-0.5">
+															<span className="text-slate-400 flex justify-between">
+																<span>ক্লিপ শুরু:</span>
+																<span className="text-amber-300 font-mono font-bold">{Number(cliffhangerHook?.start || 40.5).toFixed(1)}s</span>
+															</span>
+															<input
+																type="range"
+																min="0"
+																max={Math.max(1, (duration || 45) - 2)}
+																step="0.5"
+																value={cliffhangerHook?.start || 40.5}
+																onChange={(e) => setCliffhangerHook(prev => ({ ...(prev || {}), start: Number(e.target.value) }))}
+																className="accent-amber-400 h-1 bg-[#23242c] rounded cursor-pointer"
+															/>
+														</div>
+														<div className="flex flex-col gap-0.5">
+															<span className="text-slate-400 flex justify-between">
+																<span>ক্লিপ শেষ:</span>
+																<span className="text-amber-300 font-mono font-bold">{Number(cliffhangerHook?.end || 43.0).toFixed(1)}s</span>
+															</span>
+															<input
+																type="range"
+																min="1"
+																max={Math.max(2, duration || 45)}
+																step="0.5"
+																value={cliffhangerHook?.end || 43.0}
+																onChange={(e) => setCliffhangerHook(prev => ({ ...(prev || {}), end: Number(e.target.value) }))}
+																className="accent-amber-400 h-1 bg-[#23242c] rounded cursor-pointer"
+															/>
+														</div>
+													</div>
+												</div>
+											)}
 										</div>
 									</>
 								)}

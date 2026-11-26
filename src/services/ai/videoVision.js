@@ -30,7 +30,7 @@ export function getGeminiApiKey() {
  * Uses FFmpeg to extract low-res lightweight JPEG frames for AI Vision analysis.
  * Returns both the extracted frames and the exact probed video duration.
  */
-export async function extractKeyFrames(videoPath, customFrameCount = null, trimStart = 0, trimEnd = null) {
+export async function extractKeyFrames(videoPath, customFrameCount = null, trimStart = 0, trimEnd = null, cliffhangerHook = null) {
 	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "studio-frames-"));
 	const frames = [];
 	let duration = 36.0; // default fallback
@@ -67,6 +67,12 @@ export async function extractKeyFrames(videoPath, customFrameCount = null, trimS
 
 		// 3. Pick timestamps evenly across the active video window
 		const timestamps = [];
+		// If Action Cliffhanger Hook is enabled, prepend the peak teaser stunt frame as Frame 0
+		if (cliffhangerHook && cliffhangerHook.enabled) {
+			const hookMid = ((Number(cliffhangerHook.start) || 40.5) + (Number(cliffhangerHook.end) || 43.0)) / 2;
+			timestamps.push(Math.min(duration - 0.5, Math.max(0.5, hookMid)));
+		}
+
 		for (let i = 1; i <= frameCount; i++) {
 			const ratio = i / (frameCount + 1);
 			timestamps.push(startTime + effectiveWindow * ratio);
@@ -152,6 +158,7 @@ export async function generateScriptWithVideoVision({
 	videoSpeed = 1.0,
 	trimStart = 0,
 	trimEnd = null,
+	cliffhangerHook = null,
 	language = "en",
 	apiKey,
 	provider = "gemini",
@@ -163,18 +170,21 @@ export async function generateScriptWithVideoVision({
 	let probedDuration = 36.0;
 	let frames = [];
 	try {
-		const extraction = await extractKeyFrames(videoPath, null, trimStart, trimEnd);
+		const extraction = await extractKeyFrames(videoPath, null, trimStart, trimEnd, cliffhangerHook);
 		probedDuration = extraction.duration;
 		frames = extraction.frames;
 	} catch (err) {
 		console.warn("Keyframe extraction note:", err.message);
 	}
 
+	const isHookActive = Boolean(cliffhangerHook && cliffhangerHook.enabled);
+	const hookDuration = isHookActive ? Math.max(0.5, (Number(cliffhangerHook.end) || 43.0) - (Number(cliffhangerHook.start) || 40.5)) : 0;
+
 	const startTime = Math.max(0, Number(trimStart) || 0);
 	const endTime = (trimEnd && Number(trimEnd) > startTime) ? Math.min(probedDuration, Number(trimEnd)) : probedDuration;
 	const activeWindow = Math.max(2, endTime - startTime);
 	const speedFactor = Math.max(0.5, Math.min(2.0, Number(videoSpeed) || 1.0));
-	const effectiveDuration = Math.round(activeWindow / speedFactor);
+	const effectiveDuration = Math.round((hookDuration + activeWindow) / speedFactor);
 
 	const wordsPerSec = 3.2; // Accurate speech tempo for natural viral narration
 	const targetWords = Math.max(90, Math.round(effectiveDuration * wordsPerSec));
@@ -189,6 +199,15 @@ The video is EXACTLY ${effectiveDuration} seconds (${(effectiveDuration / 60).to
 Your voiceover MUST span the ENTIRE ${effectiveDuration} seconds from the very first frame to the final second without stopping early.
 TOTAL TARGET LENGTH: Exactly ${targetWords} spoken words (minimum ${minWords} words, maximum ${maxWords} words).
 
+${
+	isHookActive
+		? `ACTION CLIFFHANGER HOOK REQUIREMENT (First 2.5 - 3.0 seconds):
+The video begins with an extreme cliffhanger teaser clip featuring text "${cliffhangerHook.text || "WAIT FOR IT... 🔥"}" showing an insane rooftop flip high above the streets!
+YOUR OPENING SENTENCE MUST HOOK THE AUDIENCE IMMEDIATELY WITH THIS CLIFFHANGER (e.g. "Wait for it! Watch this unbelievable rooftop backflip! You won't believe what happens next...").
+Then immediately flow into the nonstop parkour compilation as every jump, roof climb, and flip escalates the adrenaline!`
+		: ""
+}
+
 STUNT COMPILATION PACING RULE:
 Intense stunts and action keep happening one after another in rapid succession all the way to the final second. Describe the ongoing flurry of actions and reactions continuously without prematurely calling an early final stunt!
 
@@ -200,7 +219,7 @@ ${
 - Phase 3 (${Math.round(effectiveDuration * 0.50)}s to ${Math.round(effectiveDuration * 0.75)}s, ~${Math.round(targetWords * 0.25)} words): Continuous rapid-fire stunts, crowd/viewer reaction, pure adrenaline.
 - Phase 4 (${Math.round(effectiveDuration * 0.75)}s to ${effectiveDuration}s, ~${Math.round(targetWords * 0.25)} words): Peak difficulty maneuvers, breathtaking execution, and final closing hype.`
 		: `Structure your narration continuously:
-- Opening Hook (first 3-5 seconds matching the very first scene)
+- Opening Hook (first 3-5 seconds matching the very first scene${isHookActive ? " and cliffhanger teaser" : ""})
 - Rapid-fire stunts & thrilling movement (middle frames)
 - Relentless high-adrenaline actions (final third)
 - Closing hype right to the very last second.`

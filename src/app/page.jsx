@@ -51,6 +51,12 @@ export default function CapCutStudio() {
 	const [autoTrim40s, setAutoTrim40s] = useState(true);
 	const [trimStart, setTrimStart] = useState(8.5);
 	const [trimEnd, setTrimEnd] = useState(45.58);
+	const [cliffhangerHook, setCliffhangerHook] = useState({
+		enabled: true,
+		start: 40.5,
+		end: 43.0,
+		text: "WAIT FOR IT... 🔥",
+	});
 
 	// Right Editing Checklist States
 	const [mirror, setMirror] = useState(true);
@@ -149,6 +155,12 @@ export default function CapCutStudio() {
 					setAutoTrim40s(true);
 					setTrimStart(8.5);
 					setTrimEnd(data.metadata?.duration || 45.58);
+					setCliffhangerHook({
+						enabled: true,
+						start: 40.5,
+						end: 43.0,
+						text: "WAIT FOR IT... 🔥",
+					});
 				}
 			} else {
 				setErrorMessage(data.error || "Upload failed");
@@ -205,6 +217,7 @@ export default function CapCutStudio() {
 							videoSpeed,
 							trimStart: autoTrim40s ? trimStart : 0,
 							trimEnd: autoTrim40s ? trimEnd : 0,
+							cliffhangerHook: cliffhangerHook.enabled ? cliffhangerHook : null,
 						}),
 					});
 					const scriptData = await scriptRes.json();
@@ -261,6 +274,7 @@ export default function CapCutStudio() {
 						start: trimStart,
 						end: trimEnd,
 					},
+					cliffhangerHook,
 					mirror,
 					blackBgLayer,
 					videoScale,
@@ -402,6 +416,8 @@ export default function CapCutStudio() {
 						setTrimStart={setTrimStart}
 						trimEnd={trimEnd}
 						setTrimEnd={setTrimEnd}
+						cliffhangerHook={cliffhangerHook}
+						setCliffhangerHook={setCliffhangerHook}
 						activeTopTab={activeTopTab}
 						setActiveTopTab={setActiveTopTab}
 						// Audio tools

@@ -12,6 +12,7 @@ export async function POST(request) {
 			aspectRatio = "16:9", // '16:9' (Long) or '9:16' (Shorts)
 			resolution = "1080p", // '1080p' or '4K' or '720p'
 			trim = { enabled: false, start: 0, end: 0 },
+			cliffhangerHook = { enabled: false, start: 40.5, end: 43.0, text: "WAIT FOR IT... 🔥" },
 			// Anti-copyright visual techniques
 			mirror = true,
 			blackBgLayer = true, // The Arman Raj red-mark technique: solid black layer underneath + 94% centered overlay
@@ -129,16 +130,36 @@ export async function POST(request) {
 
 		const ffmpegArgs = [];
 		let currentInputIndex = 0;
+		const isHookActive = Boolean(cliffhangerHook && cliffhangerHook.enabled);
+		let hookInputIdx = -1;
+		let mainInputIdx = -1;
+		let videoInputIdx = 0;
 
-		// Input 0: Main Video
-		if (trim.enabled && trim.start > 0) {
-			ffmpegArgs.push("-ss", trim.start.toString());
+		// Input Handling: Dual-Input Instant Seeking for Option 3 Cliffhanger Hook
+		if (isHookActive) {
+			const hookStart = Math.max(0, Number(cliffhangerHook.start) || 40.5);
+			const hookEnd = Math.max(hookStart + 0.5, Number(cliffhangerHook.end) || 43.0);
+			const mainStart = trim.enabled ? Math.max(0, Number(trim.start) || 0) : 0;
+			const mainEnd = (trim.enabled && trim.end > mainStart) ? Number(trim.end) : (metadata.duration || 45.58);
+
+			// Input 0: Teaser Hook clip
+			ffmpegArgs.push("-ss", hookStart.toFixed(2), "-to", hookEnd.toFixed(2), "-i", inputVideoPath);
+			hookInputIdx = currentInputIndex++;
+
+			// Input 1: Main Action clip
+			ffmpegArgs.push("-ss", mainStart.toFixed(2), "-to", mainEnd.toFixed(2), "-i", inputVideoPath);
+			mainInputIdx = currentInputIndex++;
+			videoInputIdx = mainInputIdx;
+		} else {
+			if (trim.enabled && trim.start > 0) {
+				ffmpegArgs.push("-ss", trim.start.toString());
+			}
+			if (trim.enabled && trim.end > trim.start) {
+				ffmpegArgs.push("-to", trim.end.toString());
+			}
+			ffmpegArgs.push("-i", inputVideoPath);
+			videoInputIdx = currentInputIndex++;
 		}
-		if (trim.enabled && trim.end > trim.start) {
-			ffmpegArgs.push("-to", trim.end.toString());
-		}
-		ffmpegArgs.push("-i", inputVideoPath);
-		const videoInputIdx = currentInputIndex++;
 
 		// Input 1 (Optional): BGM Track (looped)
 		let bgmInputIdx = -1;
@@ -188,6 +209,27 @@ export async function POST(request) {
 		// Filter complex chain
 		const filters = [];
 		let baseV = `[${videoInputIdx}:v]`;
+		let baseA = `[${videoInputIdx}:a]`;
+
+		// 0. Action Cliffhanger Hook (Option 3: Stitches thrilling peak stunt to front with WAIT FOR IT... banner)
+		if (isHookActive) {
+			const hookText = cliffhangerHook.text || "WAIT FOR IT... 🔥";
+			const safeHookText = String(hookText)
+				.replace(/\\/g, "\\\\")
+				.replace(/'/g, "'\\''")
+				.replace(/:/g, "\\:")
+				.replace(/%/g, "\\%");
+			const hookFontSize = Math.max(24, Math.round(tH * 0.048));
+
+			filters.push(`[${hookInputIdx}:v]drawtext=text='${safeHookText}':fontcolor=yellow:fontsize=${hookFontSize}:box=1:boxcolor=black@0.85:boxborderw=12:x='(w-text_w)/2':y='(h-text_h)*0.15'[vhook]`);
+			filters.push(`[vhook][${mainInputIdx}:v]concat=n=2:v=1:a=0[vstitched]`);
+			baseV = "[vstitched]";
+
+			if (metadata.hasAudio && !muteOriginalAudio) {
+				filters.push(`[${hookInputIdx}:a][${mainInputIdx}:a]concat=n=2:v=0:a=1[astitched]`);
+				baseA = "[astitched]";
+			}
+		}
 
 		// 1. Horizontal Flip (Mirror)
 		if (mirror) {
@@ -292,9 +334,13 @@ export async function POST(request) {
 		}
 
 		// Calculate target duration adjusted for video speed so FFmpeg never loops indefinitely
-		const rawDuration = (trim.enabled && trim.end > trim.start)
+		let rawDuration = (trim.enabled && trim.end > trim.start)
 			? (trim.end - trim.start)
 			: (metadata.duration || 36.2);
+		if (isHookActive) {
+			const hookDur = Math.max(0.5, (Number(cliffhangerHook.end) || 43.0) - (Number(cliffhangerHook.start) || 40.5));
+			rawDuration = hookDur + ((trim.enabled && trim.end > trim.start) ? (trim.end - trim.start) : (metadata.duration || 36.2));
+		}
 		const targetDuration = rawDuration / effectiveSpeed;
 
 		// 7. Audio Processing & Mixing
@@ -326,7 +372,7 @@ export async function POST(request) {
 			const vol = Number.parseFloat(originalAudioVolume) || 0.35;
 			origAudioFilters.push(`volume=${vol.toFixed(2)}`);
 
-			filters.push(`[${videoInputIdx}:a]${origAudioFilters.join(",")}[aorig]`);
+			filters.push(`${baseA}${origAudioFilters.join(",")}[aorig]`);
 			audioMixLabels.push("[aorig]");
 		}
 

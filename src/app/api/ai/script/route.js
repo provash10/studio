@@ -18,6 +18,7 @@ export async function POST(request) {
 			videoSpeed = 1.0,
 			trimStart = 0,
 			trimEnd = 0,
+			cliffhangerHook = null,
 		} = await request.json();
 
 		// Auto-detect Gemini API Key if none was passed
@@ -33,6 +34,7 @@ export async function POST(request) {
 					videoSpeed: Number(videoSpeed) || 1.0,
 					trimStart: Number(trimStart) || 0,
 					trimEnd: Number(trimEnd) || 0,
+					cliffhangerHook,
 					language,
 					apiKey: effectiveApiKey,
 					provider: provider === "auto" ? "gemini" : provider,
