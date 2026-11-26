@@ -106,32 +106,35 @@ export async function extractKeyFrames(videoPath, customFrameCount = null) {
  * Builds dynamic multi-scene script for full video duration if AI is offline
  */
 function buildFullDurationFallbackScript({ duration, language, topic }) {
-	const wordsPerSec = 2.3;
-	const targetWords = Math.max(65, Math.round(duration * wordsPerSec));
+	const wordsPerSec = 2.5;
+	const targetWords = Math.max(75, Math.round(duration * wordsPerSec));
 
 	if (language === "bn") {
-		const bnParts = [
-			`ভিডিওটির শুরুতেই লক্ষ্য করুন কি অবিশ্বাস্য এক দৃশ্য ফুটে উঠছে!`,
-			`${topic || "এই ঘটনাটি"} প্রথম দেখায় নিতান্তই সাধারণ মনে হলেও কিছুক্ষণের মধ্যেই চরম উত্তেজনা সৃষ্টি হতে চলেছে।`,
-			`গাড়ির গতি ক্রমশ বাড়তে থাকে এবং রাস্তার বিপজ্জনক বাঁকে চালক পুরোপুরি নিয়ন্ত্রণ হারিয়ে ফেলেন।`,
-			`ঠিক এই মুহূর্তে দৃশ্যটি অবিশ্বাস্য নাটকীয় মোড় নেয়! চারপাশের তীব্র ঝাঁকুনি আর বিশৃঙ্খলার মাঝে গাড়িটি ভয়াবহ দুর্ঘটনার শিকার হয়।`,
-			`মুহূর্তের মধ্যে বিস্ফোরণ এবং আগুনের লেলিহান শিখা পুরো এলাকাকে গ্রাস করে ফেলে।`,
-			`এই অভাবনীয় দৃশ্যটি শেষ পর্যন্ত না দেখলে সত্যিই বিশ্বাস করা কঠিন ছিল। নিজের চোখকে বিশ্বাস করানোই যেন অসম্ভব এক ঘটনা!`,
+		const bnSections = [
+			`ভিডিওটির শুরুতেই লক্ষ্য করুন কি অবিশ্বাস্য এক দৃশ্য ফুটে উঠছে! ${topic || "এই দৃশ্যটি"} প্রথম দেখায় নিতান্তই সাধারণ মনে হলেও কিছুক্ষণের মধ্যেই চরম উত্তেজনা সৃষ্টি হতে চলেছে। ট্রেনের ভেতরে যাত্রীরা নিশ্চিন্ত মনে বসে আছেন এবং বাইরের মনোরম দৃশ্য উপভোগ করছেন।`,
+			`ট্রেনটি যখন আঁকাবাঁকা রেললাইন ধরে দ্রুত গতিতে এগিয়ে চলে, তখন জানালার বাইরে প্রকৃতির রূপ ক্রমশ বদলে যেতে থাকে। যাত্রীদের দৈনন্দিন অভিব্যক্তি এবং ছোট ছোট মুহূর্তগুলো এই যাত্রাকে আরও বেশি জীবন্ত এবং আকর্ষণীয় করে তুলেছে।`,
+			`দীর্ঘ দূরত্বের ট্রেন ভ্রমণের ভেতরে এক অদ্ভুত মুগ্ধতা আর নস্টালজিয়া লুকিয়ে থাকে। কামরার শান্ত ও নিস্তব্ধ পরিবেশের সাথে দূরপাল্লার ট্রেনের অবিরাম চাকার ছন্দ এক মায়াবী পরিবেশ তৈরি করেছে।`,
+			`ঠিক এই মুহূর্তে দৃশ্যটি আরও গভীর ও রোমাঞ্চকর হয়ে ওঠে! দূর থেকে ভেসে আসা ট্রেনের হুইসেল আর দূরবর্তী দিগন্তের রূপ যেন সবাইকে কিছুক্ষণের জন্য হারিয়ে যেতে বাধ্য করে। প্রতিটি সেকেন্ডে নতুন কিছু দেখার এক তীব্র কৌতূহল জেগে ওঠে।`,
+			`যাত্রার শেষ ভাগে এসে দৃশ্যপট এক চমৎকার পরিণতিতে পৌঁছায়। আলো-ছায়ার অদ্ভুত খেলা আর ট্রেনের এই স্মরণীয় সফর দর্শকদের মনে এক গভীর দাগ কেটে যায়। শেষ সেকেন্ড পর্যন্ত এই আকর্ষণীয় ভিডিওটি উপভোগ করার মতো এক অনন্য মুহূর্ত!`,
 		];
-		let result = bnParts.join(" ");
+		let result = bnSections.join(" ");
+		while (result.split(/\s+/).length < targetWords) {
+			result += ` এই অবিরাম ট্রাভেল অভিজ্ঞতার প্রতিটি মুহূর্তই যেন এক একটি জীবন্ত গল্প বলে যায়। এমন অসাধারণ জার্নি সত্যিই যেকোনো দর্শকের মন জয় করে নেওয়ার মতো!`;
+		}
 		return result;
 	}
 
-	const enParts = [
-		`Right from the opening seconds, something completely unbelievable is about to happen!`,
-		`At first glance, ${topic || "this journey"} looked like an ordinary ride across the landscape, but tension quickly starts to build up.`,
-		`Watch closely as the vehicle picks up speed and takes dangerous maneuvers along the rocky path.`,
-		`Suddenly, the driver completely loses control and the entire vehicle veers off into chaos!`,
-		`In a split second, it flips violently across the rough terrain in a devastating, catastrophic crash!`,
-		`Flames erupt immediately from the wreckage as chaos takes over the entire scene.`,
-		`This shocking moment leaves everyone speechless. You truly had to watch until the very last second to believe it!`,
+	const enSections = [
+		`Right from the opening seconds, we are drawn into an unforgettable journey as the scene unfolds. At first glance, ${topic || "this journey"} seems peaceful and calm, but there is an undeniable air of mystery and anticipation in the atmosphere. Passengers settle comfortably into their seats, taking in the serene surroundings as the journey begins.`,
+		`As the wheels roll rhythmically along the tracks, the landscape outside begins to blur into a beautiful tapestry of motion and nature. Inside the cabin, subtle glances and shared quiet moments create a truly authentic story that keeps our eyes glued to the screen. Every passing second reveals a new angle of this captivating atmosphere.`,
+		`There is something truly mesmerizing about long-distance travel captured like this. The gentle sway of the car, the warm light cutting across the interior, and the constant forward momentum evoke a deep sense of wanderlust and classic storytelling. You can genuinely feel the mood shifting as time moves forward.`,
+		`As we approach the middle of the voyage, the action and pacing steadily build. The camera captures intimate details—from the expressions of travelers to the dramatic turns outside the window—adding layers of curiosity to what will happen next. It is impossible to look away as the story steadily unfolds.`,
+		`In the final moments of this journey, everything culminates in a cinematic resolution. The scenery outside softens, the rhythm slows, and we are left with a lasting impression of this incredible experience. Make sure to watch closely until the very final second, because moments like this are truly one in a million!`,
 	];
-	let result = enParts.join(" ");
+	let result = enSections.join(" ");
+	while (result.split(/\s+/).length < targetWords) {
+		result += ` The timeless charm of this journey continues to captivate, leaving viewers with a memorable reflection that lingers long after the video ends.`;
+	}
 	return result;
 }
 
@@ -161,38 +164,48 @@ export async function generateScriptWithVideoVision({
 	}
 
 	const effectiveDuration = Math.round(probedDuration || clientDuration || 36);
-	const targetWords = Math.max(65, Math.round(effectiveDuration * 2.35));
-	const minWords = Math.max(55, Math.round(effectiveDuration * 2.15));
-	const maxWords = Math.max(80, Math.round(effectiveDuration * 2.6));
+	const wordsPerSec = 2.45;
+	const targetWords = Math.max(75, Math.round(effectiveDuration * wordsPerSec));
+	const minWords = Math.max(65, Math.round(effectiveDuration * 2.2));
+	const maxWords = Math.max(85, Math.round(effectiveDuration * 2.7));
 
-	const isLong = videoType === "long" || effectiveDuration > 60;
+	const isLong = effectiveDuration > 60;
 	const promptText = `You are an expert viral video commentator and storyteller watching chronological scene frames from this video.
 
 CRITICAL FULL-VIDEO DURATION REQUIREMENT:
-The video is EXACTLY ${effectiveDuration} seconds long.
-You MUST write continuous scene-by-scene voiceover narration that covers the ENTIRE duration of the video (${effectiveDuration} seconds) without stopping early.
-TARGET LENGTH: Around ${targetWords} spoken words (minimum ${minWords} words, maximum ${maxWords} words).
+The video is EXACTLY ${effectiveDuration} seconds (${(effectiveDuration / 60).toFixed(1)} minutes) long.
+Your voiceover MUST span the ENTIRE ${effectiveDuration} seconds from the very first frame to the final second without stopping early.
+TOTAL TARGET LENGTH: Exactly ${targetWords} spoken words (minimum ${minWords} words, maximum ${maxWords} words).
 
-Scene Progression Guide:
-1. Opening Hook (0 to ${Math.round(effectiveDuration * 0.25)}s): Hook the viewer, describe the initial setting and who/what is in the vehicle or scene.
-2. Rising Action (${Math.round(effectiveDuration * 0.25)}s to ${Math.round(effectiveDuration * 0.65)}s): Detail the unfolding movement, dangerous turns, or escalating excitement seen in the middle frames.
-3. Dramatic Climax (${Math.round(effectiveDuration * 0.65)}s to ${Math.round(effectiveDuration * 0.85)}s): Provide high-energy reaction to the climax, collision, crash, or dramatic turning point.
-4. Aftermath & Resolution (${Math.round(effectiveDuration * 0.85)}s to ${effectiveDuration}s): React to the final frames, fire/aftermath, and deliver a compelling closing thought right to the end!
+${
+	isLong
+		? `Structure your ${targetWords}-word narration in 4 chronological phases:
+- Phase 1 (0 to ${Math.round(effectiveDuration * 0.25)}s, ~${Math.round(targetWords * 0.25)} words): Opening hook, setting description, passenger/subject introduction.
+- Phase 2 (${Math.round(effectiveDuration * 0.25)}s to ${Math.round(effectiveDuration * 0.50)}s, ~${Math.round(targetWords * 0.25)} words): Journey details, landscape progression, unfolding action.
+- Phase 3 (${Math.round(effectiveDuration * 0.50)}s to ${Math.round(effectiveDuration * 0.75)}s, ~${Math.round(targetWords * 0.25)} words): Rising curiosity, dramatic twists, storytelling reflections.
+- Phase 4 (${Math.round(effectiveDuration * 0.75)}s to ${effectiveDuration}s, ~${Math.round(targetWords * 0.25)} words): Climax reaction, final resolution, and compelling outro hook.`
+		: `Structure your narration continuously:
+- Opening Hook (first 3-5 seconds)
+- Rising Action & movement (middle frames)
+- Dramatic Climax & shocking outcome (final third)
+- Closing resolution to the very last second.`
+}
 
 Language: ${language === "bn" ? "Natural, captivating Bangla viral commentary (প্রাকৃতিক আকর্ষণীয় ধারাভাষ্য)" : "Energetic, engaging English viral commentary"}.
 
 STRICT FORMAT RULES:
 - Output ONLY the clean spoken script words.
-- DO NOT include timestamps, scene numbers, "Frame 1:", quotation marks, or markdown asterisks/headers.
-- Write every sentence so it can be read seamlessly aloud from start to finish.`;
+- DO NOT include timestamps, scene labels, "Phase 1:", quotation marks, or markdown asterisks/headers.
+- Write every single sentence to be spoken smoothly aloud from start to finish.`;
 
 	const effectiveKey = apiKey || getGeminiApiKey();
 
 	// 2. Call Google Gemini Vision with Image Frames
 	if (provider === "gemini" || provider === "auto") {
 		const modelCandidates = [
+			"gemini-3.5-flash-lite",
+			"gemini-3-flash-preview",
 			"gemini-flash-lite-latest",
-			"gemini-2.5-flash-lite",
 			"gemini-flash-latest",
 		];
 
@@ -219,7 +232,7 @@ STRICT FORMAT RULES:
 						contents: [{ parts }],
 						generationConfig: {
 							temperature: 0.7,
-							maxOutputTokens: 4096,
+							maxOutputTokens: 8192,
 						},
 					}),
 				});
@@ -231,19 +244,64 @@ STRICT FORMAT RULES:
 						// Clean any markdown formatting or frame headers
 						text = text
 							.replace(/^(\*\*|##|#).+$/gm, "")
+							.replace(/^Phase\s*\d+[:\-].*$/gmi, "")
+							.replace(/^Section\s*\d+[:\-].*$/gmi, "")
 							.replace(/^Frame\s*\d+[:\-].*$/gmi, "")
 							.replace(/^\d+[:\-].*$/gm, "")
 							.replace(/[\*\_\#]/g, "")
 							.replace(/\s+/g, " ")
 							.trim();
 
-						// Check word count and expand if needed to cover full duration
-						const words = text.split(/\s+/).filter(Boolean);
+						// Check word count and ensure it covers the full video duration
+						let words = text.split(/\s+/).filter(Boolean);
 						if (words.length < minWords) {
-							const extra = language === "bn"
-								? " এই অবিশ্বাস্য দৃশ্যটি শেষ পর্যন্ত না দেখলে সত্যিই বিশ্বাস করা সম্ভব ছিল না! এমন ঘটনা সত্যিই সচরাচর দেখা যায় না।"
-								: " You truly had to watch until the very end to believe what just happened here! Make sure to watch this unbelievable moment again.";
-							text = `${text} ${extra}`.trim();
+							const needed = minWords - words.length;
+							// Request continuation to guarantee full length
+							try {
+								const contRes = await fetch(geminiUrl, {
+									method: "POST",
+									headers: { "Content-Type": "application/json" },
+									body: JSON.stringify({
+										contents: [{
+											parts: [
+												...parts.slice(0, -1),
+												{
+													text: `The previous voiceover section ended with: "${text.slice(-250)}"\n\nThe video is ${effectiveDuration} seconds long and needs another ${needed} words to cover the remaining scenes up to the end of the video.\nWrite the continuation of the narration for the remaining scenes (${needed} words).\nOutput ONLY clean spoken continuation text.`
+												}
+											]
+										}],
+										generationConfig: {
+											temperature: 0.7,
+											maxOutputTokens: 4096,
+										}
+									})
+								});
+								if (contRes.ok) {
+									const contData = await contRes.json();
+									const contText = contData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+									if (contText) {
+										const cleanCont = contText
+											.replace(/^(\*\*|##|#).+$/gm, "")
+											.replace(/^Phase\s*\d+[:\-].*$/gmi, "")
+											.replace(/^Frame\s*\d+[:\-].*$/gmi, "")
+											.replace(/[\*\_\#]/g, "")
+											.replace(/\s+/g, " ")
+											.trim();
+										text = `${text} ${cleanCont}`.trim();
+										words = text.split(/\s+/).filter(Boolean);
+									}
+								}
+							} catch (cErr) {
+								console.warn("Continuation request note:", cErr.message);
+							}
+
+							// If still short, append high-retention outro expansion
+							if (words.length < minWords) {
+								const extra = language === "bn"
+									? " এই যাত্রার প্রতিটি দৃশ্যই অসাধারণ সব মুহূর্ত উপহার দিয়েছে। শেষ পর্যন্ত এই অসাধারণ সফরটি দেখার মতো এক চমৎকার অভিজ্ঞতা ছিল!"
+									: " Every single moment of this incredible journey was packed with intrigue. Thank you for watching all the way through to the very end!";
+								text = `${text} ${extra}`.trim();
+							}
 						}
 
 						return {
@@ -252,7 +310,7 @@ STRICT FORMAT RULES:
 							source: `Google Gemini Vision (${model}, ${frames.length} frames, ${effectiveDuration}s full video)`,
 							framesAnalyzed: frames.length,
 							duration: effectiveDuration,
-							wordCount: text.split(/\s+/).length,
+							wordCount: text.split(/\s+/).filter(Boolean).length,
 						};
 					}
 				} else {
@@ -277,6 +335,6 @@ STRICT FORMAT RULES:
 		source: `Studio Smart Commentary Engine (${effectiveDuration}s full video duration)`,
 		framesAnalyzed: frames.length,
 		duration: effectiveDuration,
-		wordCount: fallbackScript.split(/\s+/).length,
+		wordCount: fallbackScript.split(/\s+/).filter(Boolean).length,
 	};
 }

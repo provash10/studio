@@ -62,7 +62,12 @@ Output ONLY the clean spoken script words. No timestamps, no headers, no quotati
 
 		// (A) Gemini Text Generation
 		if (effectiveApiKey && (provider === "gemini" || provider === "auto")) {
-			const models = ["gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-flash-latest"];
+			const models = [
+				"gemini-3.5-flash-lite",
+				"gemini-3-flash-preview",
+				"gemini-flash-lite-latest",
+				"gemini-flash-latest",
+			];
 			for (const model of models) {
 				try {
 					const geminiRes = await fetch(
