@@ -155,7 +155,7 @@ export default function CapCutStudio() {
 
 			// If no voiceover track has been created yet, automatically generate AI script & synthesize ElevenLabs/TTS voiceover
 			if (!currentVoice) {
-				setCreatingStatus("1/3 Writing viral AI commentary script...");
+				setCreatingStatus("1/3 Watching video scenes with AI Vision & writing commentary...");
 				let script = "";
 				try {
 					const scriptRes = await fetch("/api/ai/script", {
@@ -166,6 +166,7 @@ export default function CapCutStudio() {
 							language: "bn",
 							provider: "auto",
 							videoTitle,
+							videoFilename,
 						}),
 					});
 					const scriptData = await scriptRes.json();
@@ -462,6 +463,7 @@ export default function CapCutStudio() {
 						voiceRate={voiceRate}
 						setVoiceRate={setVoiceRate}
 						videoTitle={videoTitle}
+						videoFilename={videoFilename}
 					/>
 				</div>
 			</div>

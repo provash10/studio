@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import path from "node:path";
+import fs from "node:fs";
+import { generateScriptWithVideoVision } from "@/services/ai/videoVision";
 
 export async function POST(request) {
 	try {
@@ -9,72 +12,97 @@ export async function POST(request) {
 			provider = "auto",
 			apiKey,
 			videoTitle = "",
+			videoFilename = "",
 		} = await request.json();
 
-		const systemInstruction = `You are a viral YouTube Shorts and Long-form video commentary scriptwriter specializing in Arman Raj / MrBeast high-retention voiceovers.
-CRITICAL INSTRUCTION: DO NOT repeat or copy the original video's dialogue verbatim. You MUST rephrase, paraphrase, and provide completely original, transformative commentary based on the visual action.
-Example: If the speaker in the original says "Let's go!", you say "Here we go now!" or "And as we move forward..." or in Bangla: "চলুন এবার দেখে নেওয়া যাক!".
-Language: ${language === "bn" ? "Bangla (natural viral commentary)" : "English (viral Shorts narration)"}.
-Pacing: Fast, punchy, curiosity-inducing, keeping viewers hooked in the first 3 seconds with zero duplicate dialogue.`;
+		// Auto-detect Gemini API Key if none was passed
+		let effectiveApiKey = apiKey;
+		if (!effectiveApiKey) {
+			if (process.env.GEMINI_API_KEY) {
+				effectiveApiKey = process.env.GEMINI_API_KEY;
+			} else {
+				// Try reading gemini_api_key from C:\Projects\m turbo\MoneyPrinterTurbo-main\config.toml
+				try {
+					const configPath = "C:\\Projects\\m turbo\\MoneyPrinterTurbo-main\\config.toml";
+					if (fs.existsSync(configPath)) {
+						const tomlContent = fs.readFileSync(configPath, "utf-8");
+						const match = tomlContent.match(/gemini_api_key\s*=\s*["']([^"']+)["']/);
+						if (match && match[1]) {
+							effectiveApiKey = match[1].trim();
+						}
+					}
+				} catch {}
+			}
+		}
 
-		// 1. If OpenAI API Key is provided
-		if (provider === "openai" && apiKey) {
-			const res = await fetch("https://api.openai.com/v1/chat/completions", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${apiKey}`,
-				},
-				body: JSON.stringify({
-					model: "gpt-4o-mini",
-					messages: [
-						{ role: "system", content: systemInstruction },
-						{
-							role: "user",
-							content: `Create an engaging 30-45 second voiceover script for this video: ${prompt || videoTitle || "Viral moment"} with a ${style} style.`,
-						},
-					],
-					temperature: 0.7,
-				}),
-			});
-			if (res.ok) {
-				const data = await res.json();
-				return NextResponse.json({
-					script: data.choices[0]?.message?.content,
-					source: "ChatGPT (GPT-4o)",
+		// 1. If a video file exists, use AI Video Vision (Gemini / OpenAI watches the video scenes!)
+		if (videoFilename) {
+			const videoPath = path.join(process.cwd(), "public", "uploads", videoFilename);
+			if (fs.existsSync(videoPath)) {
+				const visionResult = await generateScriptWithVideoVision({
+					videoPath,
+					language,
+					apiKey: effectiveApiKey,
+					provider: provider === "auto" ? "gemini" : provider,
+					videoTitle,
+					fallbackPrompt: prompt,
 				});
+
+				if (visionResult.success && visionResult.script) {
+					return NextResponse.json({
+						success: true,
+						script: visionResult.script,
+						source: visionResult.source,
+						framesAnalyzed: visionResult.framesAnalyzed,
+					});
+				}
 			}
 		}
 
-		// 2. If Gemini API Key is provided
-		if (provider === "gemini" && apiKey) {
-			const res = await fetch(
-				`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						contents: [
-							{
-								parts: [
-									{
-										text: `${systemInstruction}\n\nTask: Write a 30-40 second viral voiceover script for: ${prompt || videoTitle || "Exciting video"}. Style: ${style}.`,
-									},
-								],
-							},
-						],
-					}),
-				},
-			);
-			if (res.ok) {
-				const data = await res.json();
-				const text =
-					data.candidates?.[0]?.content?.parts?.[0]?.text || "No script generated";
-				return NextResponse.json({ script: text, source: "Google Gemini" });
+		// 2. Fallback text-based prompt generation
+		const systemInstruction = `You are a viral YouTube Shorts and Long-form video commentary scriptwriter specializing in Arman Raj / MrBeast high-retention voiceovers.
+CRITICAL INSTRUCTION: DO NOT repeat or copy original dialogue verbatim. Rephrase and provide completely original transformative commentary based on the action.
+Language: ${language === "bn" ? "Bangla (natural viral commentary)" : "English (viral Shorts narration)"}.
+Pacing: Fast, punchy, curiosity-inducing, keeping viewers hooked with zero duplicate dialogue.`;
+
+		// (A) Gemini Text Generation
+		if (effectiveApiKey && (provider === "gemini" || provider === "auto")) {
+			try {
+				const geminiRes = await fetch(
+					`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveApiKey}`,
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							contents: [
+								{
+									parts: [
+										{
+											text: `${systemInstruction}\n\nTask: Write a 35-45 second viral voiceover script for this video: ${prompt || videoTitle || "Exciting video"}. Style: ${style}. Output ONLY the script text.`,
+										},
+									],
+								},
+							],
+						}),
+					},
+				);
+				if (geminiRes.ok) {
+					const gData = await geminiRes.json();
+					const text = gData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+					if (text) {
+						return NextResponse.json({
+							success: true,
+							script: text,
+							source: "Google Gemini 1.5 Flash",
+						});
+					}
+				}
+			} catch (gErr) {
+				console.warn("Gemini text call note:", gErr.message);
 			}
 		}
 
-		// 3. Fallback Built-in Intelligent High-Retention Template Generator (Zero Cost / No API Key required!)
+		// (B) Built-in High-Retention Template Fallback (Zero Cost, No API Key required)
 		const topic = prompt || videoTitle || "এই অবিশ্বাস্য মুহূর্তটি";
 		let generatedScript = "";
 
@@ -90,6 +118,7 @@ Watch closely right now because what happens at the end is going to blow your mi
 		}
 
 		return NextResponse.json({
+			success: true,
 			script: generatedScript,
 			source: "Studio AI Engine (Built-in)",
 		});

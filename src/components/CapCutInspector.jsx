@@ -62,6 +62,7 @@ export default function CapCutInspector({
 	voiceRate = 1.0,
 	setVoiceRate,
 	videoTitle,
+	videoFilename,
 }) {
 	const [activeTopTab, setActiveTopTab] = useState("video"); // 'video', 'voice', 'animation', 'adjustment'
 	const [activeSubTab, setActiveSubTab] = useState("basic"); // 'basic', 'cutout', 'mask'
@@ -110,6 +111,7 @@ export default function CapCutInspector({
 					language: selectedLanguage,
 					provider: selectedModel,
 					videoTitle,
+					videoFilename,
 				}),
 			});
 			const data = await res.json();
@@ -675,21 +677,22 @@ export default function CapCutInspector({
 						<div className="flex items-center justify-between pb-1 border-b border-[#212328]">
 							<span className="font-bold text-white text-[11px] flex items-center gap-1.5">
 								<Bot className="w-3.5 h-3.5 text-[#00e5ff]" />
-								Rephrased AI Commentary Script
+								<span>AI Video Vision Commentary Script</span>
 							</span>
 							<button
 								type="button"
 								onClick={handleGenerateScript}
 								disabled={isGeneratingScript}
-								className="px-2.5 py-1 bg-[#00e5ff] text-black font-extrabold text-[10px] rounded hover:bg-[#00cbe2] disabled:opacity-50 cursor-pointer"
+								className="px-2.5 py-1 bg-gradient-to-r from-[#00b4d8] to-[#00e5ff] text-black font-extrabold text-[10px] rounded hover:opacity-90 disabled:opacity-50 cursor-pointer shadow"
 							>
-								{isGeneratingScript ? "Writing..." : "Generate Rephrased"}
+								{isGeneratingScript ? "Watching Video..." : "Watch Video & Write"}
 							</button>
 						</div>
 
-						<p className="text-[9px] text-slate-400 leading-snug">
-							AI will paraphrase and create unique transformative commentary (e.g. &ldquo;Here we go&rdquo; or fresh contextual dialogue instead of &ldquo;Let&apos;s go&rdquo;).
-						</p>
+						<div className="bg-[#101b22] border border-[#00e5ff]/30 p-1.5 rounded text-[9.5px] text-cyan-200 flex items-center gap-1.5">
+							<span>👁️</span>
+							<span>AI সরাসরি ভিডিওর দৃশ্যগুলো বিশ্লেষণ করে অ্যাকশন অনুযায়ী স্ক্রিপ্ট লিখবে।</span>
+						</div>
 
 						<textarea
 							rows={4}
