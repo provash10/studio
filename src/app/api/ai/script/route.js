@@ -1,47 +1,32 @@
 import { NextResponse } from "next/server";
 import path from "node:path";
 import fs from "node:fs";
-import { generateScriptWithVideoVision } from "@/services/ai/videoVision";
+import { generateScriptWithVideoVision, getGeminiApiKey } from "@/services/ai/videoVision";
 
 export async function POST(request) {
 	try {
 		const {
 			prompt,
 			style = "dramatic",
-			language = "bn",
+			language = "en",
 			provider = "auto",
 			apiKey,
 			videoTitle = "",
 			videoFilename = "",
 			videoType = "shorts",
+			duration = 36,
 		} = await request.json();
 
 		// Auto-detect Gemini API Key if none was passed
-		let effectiveApiKey = apiKey;
-		if (!effectiveApiKey) {
-			if (process.env.GEMINI_API_KEY) {
-				effectiveApiKey = process.env.GEMINI_API_KEY;
-			} else {
-				// Try reading gemini_api_key from C:\Projects\m turbo\MoneyPrinterTurbo-main\config.toml
-				try {
-					const configPath = "C:\\Projects\\m turbo\\MoneyPrinterTurbo-main\\config.toml";
-					if (fs.existsSync(configPath)) {
-						const tomlContent = fs.readFileSync(configPath, "utf-8");
-						const match = tomlContent.match(/gemini_api_key\s*=\s*["']([^"']+)["']/);
-						if (match && match[1]) {
-							effectiveApiKey = match[1].trim();
-						}
-					}
-				} catch {}
-			}
-		}
+		const effectiveApiKey = apiKey || getGeminiApiKey();
 
-		// 1. If a video file exists, use AI Video Vision (Gemini / OpenAI watches the video scenes!)
+		// 1. If a video file exists, use AI Video Vision (Gemini watches the real video scenes!)
 		if (videoFilename) {
 			const videoPath = path.join(process.cwd(), "public", "uploads", videoFilename);
 			if (fs.existsSync(videoPath)) {
 				const visionResult = await generateScriptWithVideoVision({
 					videoPath,
+					duration: Number(duration) || 36,
 					language,
 					apiKey: effectiveApiKey,
 					provider: provider === "auto" ? "gemini" : provider,
@@ -56,73 +41,88 @@ export async function POST(request) {
 						script: visionResult.script,
 						source: visionResult.source,
 						framesAnalyzed: visionResult.framesAnalyzed,
+						duration: visionResult.duration,
+						wordCount: visionResult.wordCount,
 					});
 				}
 			}
 		}
 
-		// 2. Fallback text-based prompt generation
-		const systemInstruction = `You are a viral YouTube Shorts and Long-form video commentary scriptwriter specializing in Arman Raj / MrBeast high-retention voiceovers.
-CRITICAL INSTRUCTION: DO NOT repeat or copy original dialogue verbatim. Rephrase and provide completely original transformative commentary based on the action.
-Language: ${language === "bn" ? "Bangla (natural viral commentary)" : "English (viral Shorts narration)"}.
-Pacing: Fast, punchy, curiosity-inducing, keeping viewers hooked with zero duplicate dialogue.`;
+		// 2. Full-duration text generation
+		const videoDuration = Math.round(Number(duration) || 36);
+		const targetWords = Math.max(65, Math.round(videoDuration * 2.35));
+		const minWords = Math.max(55, Math.round(videoDuration * 2.15));
+
+		const systemInstruction = `You are a viral YouTube commentary scriptwriter specializing in high-retention narration.
+CRITICAL DURATION RULE: The video is ${videoDuration} seconds long.
+You MUST write a continuous voiceover narration that covers the ENTIRE duration of ${videoDuration} seconds without stopping early.
+TARGET WORDS: Around ${targetWords} words (minimum ${minWords} words).
+Language: ${language === "bn" ? "Bangla (natural viral commentary)" : "English (viral narration)"}.
+Output ONLY the clean spoken script words. No timestamps, no headers, no quotation marks.`;
 
 		// (A) Gemini Text Generation
 		if (effectiveApiKey && (provider === "gemini" || provider === "auto")) {
-			try {
-				const geminiRes = await fetch(
-					`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${effectiveApiKey}`,
-					{
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({
-							contents: [
-								{
-									parts: [
-										{
-											text: `${systemInstruction}\n\nTask: Write a 35-45 second viral voiceover script for this video: ${prompt || videoTitle || "Exciting video"}. Style: ${style}. Output ONLY the script text.`,
-										},
-									],
+			const models = ["gemini-flash-lite-latest", "gemini-2.5-flash-lite", "gemini-flash-latest"];
+			for (const model of models) {
+				try {
+					const geminiRes = await fetch(
+						`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${effectiveApiKey}`,
+						{
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({
+								contents: [
+									{
+										parts: [
+											{
+												text: `${systemInstruction}\n\nTask: Write a ${videoDuration}-second viral voiceover script for this video: ${prompt || videoTitle || "Exciting video"}. Style: ${style}. Output ONLY the script text.`,
+											},
+										],
+									},
+								],
+								generationConfig: {
+									temperature: 0.7,
+									maxOutputTokens: 4096,
 								},
-							],
-						}),
-					},
-				);
-				if (geminiRes.ok) {
-					const gData = await geminiRes.json();
-					const text = gData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-					if (text) {
-						return NextResponse.json({
-							success: true,
-							script: text,
-							source: "Google Gemini 1.5 Flash",
-						});
+							}),
+						},
+					);
+					if (geminiRes.ok) {
+						const gData = await geminiRes.json();
+						let text = gData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+						if (text) {
+							text = text.replace(/^(\*\*|##|#).+$/gm, "").replace(/[\*\_\#]/g, "").replace(/\s+/g, " ").trim();
+							return NextResponse.json({
+								success: true,
+								script: text,
+								source: `Google Gemini (${model}, ${videoDuration}s full video)`,
+								duration: videoDuration,
+								wordCount: text.split(/\s+/).length,
+							});
+						}
 					}
+				} catch (gErr) {
+					console.warn(`Gemini text call note (${model}):`, gErr.message);
 				}
-			} catch (gErr) {
-				console.warn("Gemini text call note:", gErr.message);
 			}
 		}
 
-		// (B) Built-in High-Retention Template Fallback (Zero Cost, No API Key required)
+		// (B) Built-in High-Retention Template Fallback (Full Video Length)
 		const topic = prompt || videoTitle || "এই অবিশ্বাস্য মুহূর্তটি";
 		let generatedScript = "";
 
 		if (language === "bn") {
-			generatedScript = `ভিডিওর শুরুতেই দেখুন কি অবিশ্বাস্য এক কাণ্ড ঘটতে চলেছে! 
-${topic} দেখলে আপনিও বিশ্বাস করতে পারবেন না নিজের চোখে। 
-প্রথমে সবাই ভেবেছিল এটা নিতান্তই সাধারণ একটি ঘটনা, কিন্তু পরের সেকেন্ডেই যা ঘটলো তা দেখে সবার চোখ কপালে উঠে গেল! 
-মনোযোগ দিয়ে শেষ পর্যন্ত দেখুন, কারণ এই ক্লাইম্যাক্সটি মিস করলে আপনি সত্যিই আফসোস করবেন!`;
+			generatedScript = `ভিডিওর শুরুতেই লক্ষ্য করুন কি অবিশ্বাস্য এক দৃশ্য ফুটে উঠছে! ${topic} প্রথম দেখায় নিতান্তই সাধারণ মনে হলেও কিছুক্ষণের মধ্যেই চরম উত্তেজনা সৃষ্টি হতে চলেছে। দৃশ্যের গতি ক্রমশ বাড়তে থাকে এবং এক অভাবনীয় নাটকীয় মোড় নেয়! চারপাশের তীব্র ঝাঁকুনি আর বিশৃঙ্খলার মাঝে পরিস্থিতি পুরোপুরি নিয়ন্ত্রণের বাইরে চলে যায়। এই নাটকীয় দৃশ্যটি শেষ পর্যন্ত না দেখলে সত্যিই বিশ্বাস করা কঠিন ছিল! নিজের চোখকে বিশ্বাস করানোই যেন অসম্ভব এক ঘটনা!`;
 		} else {
-			generatedScript = `Wait until you see what happens next in this incredible moment! 
-Everyone thought this was completely ordinary, but in just 3 seconds, things took a crazy turn! 
-Watch closely right now because what happens at the end is going to blow your mind!`;
+			generatedScript = `Right from the opening seconds, something completely unbelievable is about to happen! At first glance, ${topic} looked like an ordinary moment, but tension quickly starts to build up. Watch closely as the action accelerates and takes an unexpected, dangerous turn. Suddenly, everything spins completely out of control! In a split second, chaos takes over the entire scene in a shocking climax. You truly had to watch until the very last second to believe it!`;
 		}
 
 		return NextResponse.json({
 			success: true,
 			script: generatedScript,
-			source: "Studio AI Engine (Built-in)",
+			source: `Studio AI Engine (${videoDuration}s full video)`,
+			duration: videoDuration,
+			wordCount: generatedScript.split(/\s+/).length,
 		});
 	} catch (error) {
 		console.error("Script generation error:", error);

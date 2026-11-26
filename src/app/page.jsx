@@ -196,6 +196,7 @@ export default function CapCutStudio() {
 							videoTitle,
 							videoFilename,
 							videoType,
+							duration: duration || 36,
 						}),
 					});
 					const scriptData = await scriptRes.json();
@@ -531,6 +532,7 @@ export default function CapCutStudio() {
 						setSyncVoiceSpeed={setSyncVoiceSpeed}
 						videoTitle={videoTitle}
 						videoFilename={videoFilename}
+						duration={duration}
 						videoType={videoType}
 						setVideoType={handleVideoTypeChange}
 					/>

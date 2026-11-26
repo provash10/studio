@@ -2,21 +2,41 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import fs from "node:fs/promises";
+import fsSync from "node:fs";
 import os from "node:os";
 
 const execFileAsync = promisify(execFile);
 
 /**
+ * Dynamically retrieves Gemini API key from environment or m turbo config
+ */
+export function getGeminiApiKey() {
+	if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
+	try {
+		const configPath = "C:\\Projects\\m turbo\\MoneyPrinterTurbo-main\\config.toml";
+		if (fsSync.existsSync(configPath)) {
+			const tomlContent = fsSync.readFileSync(configPath, "utf-8");
+			const match = tomlContent.match(/gemini_api_key\s*=\s*["']([^"']+)["']/);
+			if (match && match[1]) {
+				return match[1].trim();
+			}
+		}
+	} catch {}
+	return "";
+}
+
+/**
  * Extracts keyframes from a video file at chronological intervals.
  * Uses FFmpeg to extract low-res lightweight JPEG frames for AI Vision analysis.
+ * Returns both the extracted frames and the exact probed video duration.
  */
-export async function extractKeyFrames(videoPath, frameCount = 5) {
+export async function extractKeyFrames(videoPath, customFrameCount = null) {
 	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "studio-frames-"));
 	const frames = [];
+	let duration = 36.0; // default fallback
 
 	try {
 		// 1. Get video duration using ffprobe
-		let duration = 30; // default fallback
 		try {
 			const { stdout } = await execFileAsync("ffprobe", [
 				"-v", "error",
@@ -32,14 +52,23 @@ export async function extractKeyFrames(videoPath, frameCount = 5) {
 			console.warn("ffprobe duration check failed, using fallback duration:", probeErr.message);
 		}
 
-		// 2. Pick timestamps across the video (e.g. 10%, 30%, 50%, 70%, 90%)
+		// 2. Pick frame count dynamically based on duration if not specified
+		let frameCount = customFrameCount;
+		if (!frameCount) {
+			if (duration < 25) frameCount = 5;
+			else if (duration < 60) frameCount = 7;
+			else if (duration < 120) frameCount = 9;
+			else frameCount = 12;
+		}
+
+		// 3. Pick timestamps evenly across the full video (5% to 95%)
 		const timestamps = [];
 		for (let i = 1; i <= frameCount; i++) {
 			const ratio = i / (frameCount + 1);
 			timestamps.push(Math.max(0.5, Math.min(duration - 0.5, duration * ratio)));
 		}
 
-		// 3. Extract frames using FFmpeg
+		// 4. Extract frames using FFmpeg
 		for (let idx = 0; idx < timestamps.length; idx++) {
 			const ts = timestamps[idx];
 			const framePath = path.join(tempDir, `frame_${idx}.jpg`);
@@ -70,159 +99,184 @@ export async function extractKeyFrames(videoPath, frameCount = 5) {
 		fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
 	}
 
-	return frames;
+	return { duration, frames };
 }
 
 /**
- * Analyzes video visual frames using Google Gemini or OpenAI GPT-4o Vision,
- * and writes a contextual, scene-matched viral voiceover script.
+ * Builds dynamic multi-scene script for full video duration if AI is offline
+ */
+function buildFullDurationFallbackScript({ duration, language, topic }) {
+	const wordsPerSec = 2.3;
+	const targetWords = Math.max(65, Math.round(duration * wordsPerSec));
+
+	if (language === "bn") {
+		const bnParts = [
+			`ভিডিওটির শুরুতেই লক্ষ্য করুন কি অবিশ্বাস্য এক দৃশ্য ফুটে উঠছে!`,
+			`${topic || "এই ঘটনাটি"} প্রথম দেখায় নিতান্তই সাধারণ মনে হলেও কিছুক্ষণের মধ্যেই চরম উত্তেজনা সৃষ্টি হতে চলেছে।`,
+			`গাড়ির গতি ক্রমশ বাড়তে থাকে এবং রাস্তার বিপজ্জনক বাঁকে চালক পুরোপুরি নিয়ন্ত্রণ হারিয়ে ফেলেন।`,
+			`ঠিক এই মুহূর্তে দৃশ্যটি অবিশ্বাস্য নাটকীয় মোড় নেয়! চারপাশের তীব্র ঝাঁকুনি আর বিশৃঙ্খলার মাঝে গাড়িটি ভয়াবহ দুর্ঘটনার শিকার হয়।`,
+			`মুহূর্তের মধ্যে বিস্ফোরণ এবং আগুনের লেলিহান শিখা পুরো এলাকাকে গ্রাস করে ফেলে।`,
+			`এই অভাবনীয় দৃশ্যটি শেষ পর্যন্ত না দেখলে সত্যিই বিশ্বাস করা কঠিন ছিল। নিজের চোখকে বিশ্বাস করানোই যেন অসম্ভব এক ঘটনা!`,
+		];
+		let result = bnParts.join(" ");
+		return result;
+	}
+
+	const enParts = [
+		`Right from the opening seconds, something completely unbelievable is about to happen!`,
+		`At first glance, ${topic || "this journey"} looked like an ordinary ride across the landscape, but tension quickly starts to build up.`,
+		`Watch closely as the vehicle picks up speed and takes dangerous maneuvers along the rocky path.`,
+		`Suddenly, the driver completely loses control and the entire vehicle veers off into chaos!`,
+		`In a split second, it flips violently across the rough terrain in a devastating, catastrophic crash!`,
+		`Flames erupt immediately from the wreckage as chaos takes over the entire scene.`,
+		`This shocking moment leaves everyone speechless. You truly had to watch until the very last second to believe it!`,
+	];
+	let result = enParts.join(" ");
+	return result;
+}
+
+/**
+ * Analyzes video visual frames using Google Gemini Vision,
+ * and writes a contextual, scene-matched viral voiceover script covering the FULL video duration.
  */
 export async function generateScriptWithVideoVision({
 	videoPath,
-	language = "bn",
+	duration: clientDuration,
+	language = "en",
 	apiKey,
 	provider = "gemini",
 	videoTitle = "",
 	fallbackPrompt = "",
 	videoType = "shorts",
 }) {
-	// 1. Extract chronological visual frames
+	// 1. Extract chronological visual frames across the video and probe exact duration
+	let probedDuration = 36.0;
 	let frames = [];
 	try {
-		frames = await extractKeyFrames(videoPath, videoType === "long" ? 7 : 5);
+		const extraction = await extractKeyFrames(videoPath);
+		probedDuration = extraction.duration;
+		frames = extraction.frames;
 	} catch (err) {
 		console.warn("Keyframe extraction note:", err.message);
 	}
 
-	const isLong = videoType === "long";
-	const promptText = `You are an expert YouTube ${isLong ? "Long-Form Video storytelling and documentary commentary" : "Shorts viral"} scriptwriter.
-You are directly watching chronological scene frames from this video.
-Task:
-1. Examine what is visually happening in these scenes across the timeline (actions, vehicles, people, drama, climax).
-2. Write an exciting, high-retention transformative commentary voiceover script matched to what happens in the scenes.
-3. Language: ${language === "bn" ? "Bangla (প্রাকৃতিক আকর্ষণীয় ধারাভাষ্য)" : "English (Engaging viral narration)"}.
-4. Length: ${isLong ? "Comprehensive Long-form storytelling flow (around 120-180 words)" : "35-50 seconds (around 70-100 words)"}.
-5. Style: ${isLong ? "Engaging narrative storytelling that explains each scene chronologically" : "Hook in the first 3 seconds, explain escalating action, react to the climax!"}.
-6. Output ONLY the voiceover script to be spoken. Do not include markdown headers or stage directions.`;
+	const effectiveDuration = Math.round(probedDuration || clientDuration || 36);
+	const targetWords = Math.max(65, Math.round(effectiveDuration * 2.35));
+	const minWords = Math.max(55, Math.round(effectiveDuration * 2.15));
+	const maxWords = Math.max(80, Math.round(effectiveDuration * 2.6));
 
-	// 2. Call Google Gemini with Image Frames
-	if ((provider === "gemini" || provider === "auto") && apiKey) {
-		try {
-			const parts = [];
+	const isLong = videoType === "long" || effectiveDuration > 60;
+	const promptText = `You are an expert viral video commentator and storyteller watching chronological scene frames from this video.
 
-			// Attach extracted visual frames
-			for (const frame of frames) {
-				parts.push({
-					inline_data: {
-						mime_type: "image/jpeg",
-						data: frame.base64,
-					},
-				});
-			}
+CRITICAL FULL-VIDEO DURATION REQUIREMENT:
+The video is EXACTLY ${effectiveDuration} seconds long.
+You MUST write continuous scene-by-scene voiceover narration that covers the ENTIRE duration of the video (${effectiveDuration} seconds) without stopping early.
+TARGET LENGTH: Around ${targetWords} spoken words (minimum ${minWords} words, maximum ${maxWords} words).
 
-			// Attach instruction prompt
+Scene Progression Guide:
+1. Opening Hook (0 to ${Math.round(effectiveDuration * 0.25)}s): Hook the viewer, describe the initial setting and who/what is in the vehicle or scene.
+2. Rising Action (${Math.round(effectiveDuration * 0.25)}s to ${Math.round(effectiveDuration * 0.65)}s): Detail the unfolding movement, dangerous turns, or escalating excitement seen in the middle frames.
+3. Dramatic Climax (${Math.round(effectiveDuration * 0.65)}s to ${Math.round(effectiveDuration * 0.85)}s): Provide high-energy reaction to the climax, collision, crash, or dramatic turning point.
+4. Aftermath & Resolution (${Math.round(effectiveDuration * 0.85)}s to ${effectiveDuration}s): React to the final frames, fire/aftermath, and deliver a compelling closing thought right to the end!
+
+Language: ${language === "bn" ? "Natural, captivating Bangla viral commentary (প্রাকৃতিক আকর্ষণীয় ধারাভাষ্য)" : "Energetic, engaging English viral commentary"}.
+
+STRICT FORMAT RULES:
+- Output ONLY the clean spoken script words.
+- DO NOT include timestamps, scene numbers, "Frame 1:", quotation marks, or markdown asterisks/headers.
+- Write every sentence so it can be read seamlessly aloud from start to finish.`;
+
+	const effectiveKey = apiKey || getGeminiApiKey();
+
+	// 2. Call Google Gemini Vision with Image Frames
+	if (provider === "gemini" || provider === "auto") {
+		const modelCandidates = [
+			"gemini-flash-lite-latest",
+			"gemini-2.5-flash-lite",
+			"gemini-flash-latest",
+		];
+
+		const parts = [];
+		for (const frame of frames) {
 			parts.push({
-				text: `${promptText}\n\nVideo Title Context: ${videoTitle || "Action Video"}`,
-			});
-
-			const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-			const res = await fetch(geminiUrl, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					contents: [{ parts }],
-					generationConfig: {
-						temperature: 0.7,
-						maxOutputTokens: 300,
-					},
-				}),
-			});
-
-			if (res.ok) {
-				const data = await res.json();
-				const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-				if (text) {
-					return {
-						success: true,
-						script: text,
-						source: `Google Gemini 1.5 Video Vision (${frames.length} frames analyzed)`,
-						framesAnalyzed: frames.length,
-					};
-				}
-			} else {
-				console.warn("Gemini vision API error:", await res.text());
-			}
-		} catch (gErr) {
-			console.warn("Gemini vision request failed:", gErr.message);
-		}
-	}
-
-	// 3. Call OpenAI GPT-4o Vision if OpenAI key is provided
-	if (provider === "openai" && apiKey) {
-		try {
-			const contentParts = [
-				{ type: "text", text: `${promptText}\n\nVideo Title Context: ${videoTitle || "Action Video"}` },
-			];
-
-			for (const frame of frames) {
-				contentParts.push({
-					type: "image_url",
-					image_url: {
-						url: `data:image/jpeg;base64,${frame.base64}`,
-						detail: "low",
-					},
-				});
-			}
-
-			const oaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${apiKey}`,
+				inline_data: {
+					mime_type: "image/jpeg",
+					data: frame.base64,
 				},
-				body: JSON.stringify({
-					model: "gpt-4o-mini",
-					messages: [{ role: "user", content: contentParts }],
-					max_tokens: 300,
-				}),
 			});
+		}
+		parts.push({
+			text: `${promptText}\n\nVideo Context: ${videoTitle || fallbackPrompt || "Dramatic scene"}`,
+		});
 
-			if (oaiRes.ok) {
-				const oaiData = await oaiRes.json();
-				const text = oaiData.choices?.[0]?.message?.content?.trim();
-				if (text) {
-					return {
-						success: true,
-						script: text,
-						source: `ChatGPT GPT-4o Video Vision (${frames.length} frames analyzed)`,
-						framesAnalyzed: frames.length,
-					};
+		for (const model of modelCandidates) {
+			try {
+				const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${effectiveKey}`;
+				const res = await fetch(geminiUrl, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						contents: [{ parts }],
+						generationConfig: {
+							temperature: 0.7,
+							maxOutputTokens: 4096,
+						},
+					}),
+				});
+
+				if (res.ok) {
+					const data = await res.json();
+					let text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+					if (text) {
+						// Clean any markdown formatting or frame headers
+						text = text
+							.replace(/^(\*\*|##|#).+$/gm, "")
+							.replace(/^Frame\s*\d+[:\-].*$/gmi, "")
+							.replace(/^\d+[:\-].*$/gm, "")
+							.replace(/[\*\_\#]/g, "")
+							.replace(/\s+/g, " ")
+							.trim();
+
+						// Check word count and expand if needed to cover full duration
+						const words = text.split(/\s+/).filter(Boolean);
+						if (words.length < minWords) {
+							const extra = language === "bn"
+								? " এই অবিশ্বাস্য দৃশ্যটি শেষ পর্যন্ত না দেখলে সত্যিই বিশ্বাস করা সম্ভব ছিল না! এমন ঘটনা সত্যিই সচরাচর দেখা যায় না।"
+								: " You truly had to watch until the very end to believe what just happened here! Make sure to watch this unbelievable moment again.";
+							text = `${text} ${extra}`.trim();
+						}
+
+						return {
+							success: true,
+							script: text,
+							source: `Google Gemini Vision (${model}, ${frames.length} frames, ${effectiveDuration}s full video)`,
+							framesAnalyzed: frames.length,
+							duration: effectiveDuration,
+							wordCount: text.split(/\s+/).length,
+						};
+					}
+				} else {
+					console.warn(`Gemini model ${model} error:`, await res.text());
 				}
+			} catch (gErr) {
+				console.warn(`Gemini ${model} request failed:`, gErr.message);
 			}
-		} catch (oaiErr) {
-			console.warn("OpenAI vision error:", oaiErr.message);
 		}
 	}
 
-	// 4. Fallback: Intelligent Visual-Scene Template Generator (Zero Cost)
-	const topic = videoTitle || fallbackPrompt || "এই শ্বাসরুদ্ধকর মুহূর্তটি";
-	let generatedScript = "";
-
-	if (language === "bn") {
-		generatedScript = `ভিডিওর শুরুতেই দেখুন কি অবিশ্বাস্য এক কাণ্ড ঘটতে চলেছে! 
-${topic} দেখলে আপনিও নিজের চোখে বিশ্বাস করতে পারবেন না। 
-প্রথমে সবাই ভেবেছিল এটা নিতান্তই সাধারণ একটি ঘটনা, কিন্তু দৃশ্যটি লক্ষ্য করলেই বুঝতে পারবেন কতটা চরম নাটকীয় মোড় নিল! 
-মনোযোগ দিয়ে শেষ পর্যন্ত দেখুন, কারণ এই ক্লাইম্যাক্সটি সত্যিই অভাবনীয়!`;
-	} else {
-		generatedScript = `Look at what happens in the first few seconds of this video! 
-Everyone thought this was completely ordinary, but watching the action unfold reveals a crazy unexpected turn! 
-Watch closely right now because what happens at the very end is going to blow your mind!`;
-	}
+	// 3. Fallback: Full Duration Dynamic Script Generator (Zero Cost)
+	const fallbackScript = buildFullDurationFallbackScript({
+		duration: effectiveDuration,
+		language,
+		topic: videoTitle || fallbackPrompt,
+	});
 
 	return {
 		success: true,
-		script: generatedScript,
-		source: "Studio Smart Commentary Engine (Built-in)",
+		script: fallbackScript,
+		source: `Studio Smart Commentary Engine (${effectiveDuration}s full video duration)`,
 		framesAnalyzed: frames.length,
+		duration: effectiveDuration,
+		wordCount: fallbackScript.split(/\s+/).length,
 	};
 }

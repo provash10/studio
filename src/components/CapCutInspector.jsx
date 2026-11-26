@@ -68,6 +68,7 @@ export default function CapCutInspector({
 	setSyncVoiceSpeed,
 	videoTitle,
 	videoFilename,
+	duration = 36,
 	videoType = "shorts",
 	setVideoType,
 }) {
@@ -120,6 +121,7 @@ export default function CapCutInspector({
 					videoTitle,
 					videoFilename,
 					videoType,
+					duration,
 				}),
 			});
 			const data = await res.json();
