@@ -93,41 +93,8 @@ export default function CapCutTopNav({
 					</button>
 				</div>
 
-				{/* Aspect Ratio Selector (9:16 Shorts, 16:9 Long, 1:1, 4:3, 3:4, 21:9) */}
-				<div className="flex items-center bg-[#1a1b20] p-0.5 rounded-lg border border-[#2d2f37] gap-1">
-					<button
-						type="button"
-						onClick={() => {
-							if (setVideoType) setVideoType("shorts");
-							if (setAspectRatio) setAspectRatio("9:16");
-						}}
-						className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
-							aspectRatio === "9:16"
-								? "bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold shadow-sm"
-								: "text-slate-400 hover:text-white"
-						}`}
-						title="9:16 Shorts (Vertical, YouTube Shorts / TikTok / Reels)"
-					>
-						<span>📱 9:16</span>
-					</button>
-
-					<button
-						type="button"
-						onClick={() => {
-							if (setVideoType) setVideoType("long");
-							if (setAspectRatio) setAspectRatio("16:9");
-						}}
-						className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer ${
-							aspectRatio === "16:9"
-								? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold shadow-sm"
-								: "text-slate-400 hover:text-white"
-						}`}
-						title="16:9 Long Video (Landscape Widescreen, YouTube Long-form)"
-					>
-						<span>🖥️ 16:9</span>
-					</button>
-
-					{/* Dropdown for All Ratios */}
+				{/* Aspect Ratio Dropdown Selector */}
+				<div className="flex items-center bg-[#1a1b20] p-0.5 rounded-lg border border-[#2d2f37]">
 					<select
 						value={aspectRatio}
 						onChange={(e) => {
@@ -135,8 +102,8 @@ export default function CapCutTopNav({
 							if (setAspectRatio) setAspectRatio(val);
 							if (setVideoType) setVideoType(val === "9:16" ? "shorts" : "long");
 						}}
-						className="bg-[#24262d] text-[#00e5ff] font-bold text-[10.5px] rounded px-1.5 py-1 border border-[#353742] focus:outline-none cursor-pointer"
-						title="Select All Aspect Ratios"
+						className="bg-[#202228] hover:bg-[#282a32] text-[#00e5ff] font-bold text-[11px] rounded-md px-2.5 py-1 border border-[#353742] focus:outline-none cursor-pointer transition-all shadow-sm"
+						title="Select Aspect Ratio"
 					>
 						<option value="9:16">📱 9:16 (Shorts / Reels)</option>
 						<option value="16:9">🖥️ 16:9 (Long Video)</option>
