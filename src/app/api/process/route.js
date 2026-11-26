@@ -168,10 +168,13 @@ export async function POST(request) {
 
 		// Input 2 (Optional): Voiceover Audio Track
 		let voiceInputIdx = -1;
+		let voiceDuration = 0;
 		if (voiceoverEnabled && voiceoverFileName) {
 			const voicePath = path.join(voiceDir, voiceoverFileName);
 			try {
 				await fs.access(voicePath);
+				const voiceMeta = await probeVideo(voicePath);
+				voiceDuration = voiceMeta.duration || 0;
 				ffmpegArgs.push("-i", voicePath);
 				voiceInputIdx = currentInputIndex++;
 			} catch (e) {
@@ -339,10 +342,25 @@ export async function POST(request) {
 			audioMixLabels.push("[abgm]");
 		}
 
-		// (c) Voiceover Track (boosted for crisp and clear speech)
+		// (c) Voiceover Track (boosted for crisp and clear speech + perfectly synced to video end)
 		if (voiceInputIdx !== -1) {
 			const vVol = Number.parseFloat(voiceoverVolume) || 1.4;
-			filters.push(`[${voiceInputIdx}:a]volume=${vVol.toFixed(2)}[avoice]`);
+			const voiceFilters = [];
+
+			// Perfect end-sync: adjust tempo so speech matches video duration exactly without cutting off early
+			if (voiceDuration > 0 && targetDuration > 0) {
+				const desiredVoiceDuration = Math.max(1, targetDuration - 0.3);
+				const rawTempo = voiceDuration / desiredVoiceDuration;
+				// Safe tempo range: 0.70x to 1.30x for crystal-clear natural speech
+				const tempo = Math.max(0.70, Math.min(1.30, rawTempo));
+
+				if (Math.abs(tempo - 1.0) > 0.02) {
+					voiceFilters.push(`atempo=${tempo.toFixed(3)}`);
+				}
+			}
+
+			voiceFilters.push(`volume=${vVol.toFixed(2)}`);
+			filters.push(`[${voiceInputIdx}:a]${voiceFilters.join(",")}[avoice]`);
 			audioMixLabels.push("[avoice]");
 		}
 

@@ -197,6 +197,9 @@ export default function CapCutStudio() {
 							videoFilename,
 							videoType,
 							duration: duration || 36,
+							videoSpeed,
+							trimStart: autoTrim40s ? trimStart : 0,
+							trimEnd: autoTrim40s ? trimEnd : 0,
 						}),
 					});
 					const scriptData = await scriptRes.json();

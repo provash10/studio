@@ -664,18 +664,93 @@ export default function CapCutMediaLibrary({
 											</label>
 										</div>
 
-										{/* Item 4: Highlight Trimmer */}
-										<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2">
-											<label className="flex items-start justify-between cursor-pointer gap-2">
-												<div>
-													<div className="text-[11px] font-bold text-white flex items-center gap-1">
-														<Scissors className="w-3 h-3 text-amber-400" />
-														<span>4. CapCut Highlight Trimmer</span>
-													</div>
-													<p className="text-[9px] text-slate-400 mt-0.5">Trims video to first 40s viral climax hook as per Docs.</p>
+										{/* Item 4: Highlight Trimmer & Intro Cut Controller */}
+										<div className="p-2.5 rounded-lg border bg-[#18191c] border-[#26282f] flex flex-col gap-2.5">
+											<div className="flex items-center justify-between">
+												<div className="flex items-center gap-1.5 text-[11px] font-bold text-white">
+													<Scissors className="w-3.5 h-3.5 text-amber-400" />
+													<span>ভিডিও ট্রিম ও অপ্রাসঙ্গিক ক্লিপ কাট (Intro Cut)</span>
 												</div>
-												<input type="checkbox" checked={autoTrim40s} onChange={(e) => setAutoTrim40s(e.target.checked)} className="accent-amber-400 w-4 h-4 cursor-pointer mt-0.5" />
-											</label>
+												<label className="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer">
+													<input
+														type="checkbox"
+														checked={autoTrim40s}
+														onChange={(e) => setAutoTrim40s(e.target.checked)}
+														className="accent-amber-400 w-3.5 h-3.5 cursor-pointer"
+													/>
+													<span className="font-bold text-amber-400">{autoTrim40s ? "সক্রিয়" : "বন্ধ"}</span>
+												</label>
+											</div>
+
+											{/* Quick 1-click Intro Cut Buttons */}
+											<div className="grid grid-cols-2 gap-1.5">
+												<button
+													type="button"
+													onClick={() => {
+														setAutoTrim40s(true);
+														setTrimStart(8.5); // Cuts the 8.5s egg/face intro to start at parkour jump!
+														setTrimEnd(duration || 45.5);
+													}}
+													className={`py-1.5 px-2 rounded text-[10px] font-bold border transition-all flex items-center justify-center gap-1 cursor-pointer ${
+														autoTrim40s && trimStart >= 7
+															? "bg-amber-400 text-black border-amber-400 shadow"
+															: "bg-[#1c1d24] text-amber-300 border-amber-500/40 hover:border-amber-400"
+													}`}
+												>
+													✂️ শুরুর ৮.৫ সে. বাদ দিন (Skip Intro)
+												</button>
+												<button
+													type="button"
+													onClick={() => {
+														setAutoTrim40s(false);
+														setTrimStart(0);
+														setTrimEnd(duration || 45.5);
+													}}
+													className="py-1.5 px-2 rounded text-[10px] font-bold bg-[#1c1d24] text-slate-300 border border-[#2b2d35] hover:border-white transition-all flex items-center justify-center gap-1 cursor-pointer"
+												>
+													🔄 পুরো ভিডিও (00:00)
+												</button>
+											</div>
+
+											{/* Numeric / Slider Controls for Start & End */}
+											<div className="grid grid-cols-2 gap-2 pt-1 border-t border-[#26282f]">
+												<div className="flex flex-col gap-1">
+													<span className="text-[9.5px] text-slate-400 flex justify-between">
+														<span>শুরুর সময় (Start):</span>
+														<span className="text-amber-300 font-mono font-bold">{Number(trimStart || 0).toFixed(1)}s</span>
+													</span>
+													<input
+														type="range"
+														min="0"
+														max={Math.max(1, (duration || 45) - 5)}
+														step="0.5"
+														value={trimStart || 0}
+														onChange={(e) => {
+															setTrimStart(Number(e.target.value));
+															setAutoTrim40s(true);
+														}}
+														className="w-full accent-amber-400 h-1 bg-[#23242c] rounded cursor-pointer"
+													/>
+												</div>
+												<div className="flex flex-col gap-1">
+													<span className="text-[9.5px] text-slate-400 flex justify-between">
+														<span>শেষের সময় (End):</span>
+														<span className="text-amber-300 font-mono font-bold">{Number(trimEnd || duration || 45).toFixed(1)}s</span>
+													</span>
+													<input
+														type="range"
+														min="5"
+														max={Math.max(10, duration || 45)}
+														step="0.5"
+														value={trimEnd || duration || 45}
+														onChange={(e) => {
+															setTrimEnd(Number(e.target.value));
+															setAutoTrim40s(true);
+														}}
+														className="w-full accent-amber-400 h-1 bg-[#23242c] rounded cursor-pointer"
+													/>
+												</div>
+											</div>
 										</div>
 									</>
 								)}

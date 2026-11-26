@@ -15,6 +15,9 @@ export async function POST(request) {
 			videoFilename = "",
 			videoType = "shorts",
 			duration = 36,
+			videoSpeed = 1.0,
+			trimStart = 0,
+			trimEnd = 0,
 		} = await request.json();
 
 		// Auto-detect Gemini API Key if none was passed
@@ -27,6 +30,9 @@ export async function POST(request) {
 				const visionResult = await generateScriptWithVideoVision({
 					videoPath,
 					duration: Number(duration) || 36,
+					videoSpeed: Number(videoSpeed) || 1.0,
+					trimStart: Number(trimStart) || 0,
+					trimEnd: Number(trimEnd) || 0,
 					language,
 					apiKey: effectiveApiKey,
 					provider: provider === "auto" ? "gemini" : provider,

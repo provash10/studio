@@ -30,7 +30,7 @@ export function getGeminiApiKey() {
  * Uses FFmpeg to extract low-res lightweight JPEG frames for AI Vision analysis.
  * Returns both the extracted frames and the exact probed video duration.
  */
-export async function extractKeyFrames(videoPath, customFrameCount = null) {
+export async function extractKeyFrames(videoPath, customFrameCount = null, trimStart = 0, trimEnd = null) {
 	const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "studio-frames-"));
 	const frames = [];
 	let duration = 36.0; // default fallback
@@ -52,20 +52,24 @@ export async function extractKeyFrames(videoPath, customFrameCount = null) {
 			console.warn("ffprobe duration check failed, using fallback duration:", probeErr.message);
 		}
 
-		// 2. Pick frame count dynamically based on duration if not specified
+		const startTime = Math.max(0, Number(trimStart) || 0);
+		const endTime = (trimEnd && Number(trimEnd) > startTime) ? Math.min(duration, Number(trimEnd)) : duration;
+		const effectiveWindow = Math.max(2, endTime - startTime);
+
+		// 2. Pick frame count dynamically based on effective window
 		let frameCount = customFrameCount;
 		if (!frameCount) {
-			if (duration < 25) frameCount = 5;
-			else if (duration < 60) frameCount = 7;
-			else if (duration < 120) frameCount = 9;
+			if (effectiveWindow < 25) frameCount = 5;
+			else if (effectiveWindow < 60) frameCount = 7;
+			else if (effectiveWindow < 120) frameCount = 9;
 			else frameCount = 12;
 		}
 
-		// 3. Pick timestamps evenly across the full video (5% to 95%)
+		// 3. Pick timestamps evenly across the active video window
 		const timestamps = [];
 		for (let i = 1; i <= frameCount; i++) {
 			const ratio = i / (frameCount + 1);
-			timestamps.push(Math.max(0.5, Math.min(duration - 0.5, duration * ratio)));
+			timestamps.push(startTime + effectiveWindow * ratio);
 		}
 
 		// 4. Extract frames using FFmpeg
@@ -145,6 +149,9 @@ function buildFullDurationFallbackScript({ duration, language, topic }) {
 export async function generateScriptWithVideoVision({
 	videoPath,
 	duration: clientDuration,
+	videoSpeed = 1.0,
+	trimStart = 0,
+	trimEnd = null,
 	language = "en",
 	apiKey,
 	provider = "gemini",
@@ -156,18 +163,23 @@ export async function generateScriptWithVideoVision({
 	let probedDuration = 36.0;
 	let frames = [];
 	try {
-		const extraction = await extractKeyFrames(videoPath);
+		const extraction = await extractKeyFrames(videoPath, null, trimStart, trimEnd);
 		probedDuration = extraction.duration;
 		frames = extraction.frames;
 	} catch (err) {
 		console.warn("Keyframe extraction note:", err.message);
 	}
 
-	const effectiveDuration = Math.round(probedDuration || clientDuration || 36);
-	const wordsPerSec = 2.45;
-	const targetWords = Math.max(75, Math.round(effectiveDuration * wordsPerSec));
-	const minWords = Math.max(65, Math.round(effectiveDuration * 2.2));
-	const maxWords = Math.max(85, Math.round(effectiveDuration * 2.7));
+	const startTime = Math.max(0, Number(trimStart) || 0);
+	const endTime = (trimEnd && Number(trimEnd) > startTime) ? Math.min(probedDuration, Number(trimEnd)) : probedDuration;
+	const activeWindow = Math.max(2, endTime - startTime);
+	const speedFactor = Math.max(0.5, Math.min(2.0, Number(videoSpeed) || 1.0));
+	const effectiveDuration = Math.round(activeWindow / speedFactor);
+
+	const wordsPerSec = 3.2; // Accurate speech tempo for natural viral narration
+	const targetWords = Math.max(90, Math.round(effectiveDuration * wordsPerSec));
+	const minWords = Math.max(80, Math.round(effectiveDuration * 2.85));
+	const maxWords = Math.max(105, Math.round(effectiveDuration * 3.5));
 
 	const isLong = effectiveDuration > 60;
 	const promptText = `You are an expert viral video commentator and storyteller watching chronological scene frames from this video.
@@ -177,18 +189,21 @@ The video is EXACTLY ${effectiveDuration} seconds (${(effectiveDuration / 60).to
 Your voiceover MUST span the ENTIRE ${effectiveDuration} seconds from the very first frame to the final second without stopping early.
 TOTAL TARGET LENGTH: Exactly ${targetWords} spoken words (minimum ${minWords} words, maximum ${maxWords} words).
 
+STUNT COMPILATION PACING RULE:
+Intense stunts and action keep happening one after another in rapid succession all the way to the final second. Describe the ongoing flurry of actions and reactions continuously without prematurely calling an early final stunt!
+
 ${
 	isLong
 		? `Structure your ${targetWords}-word narration in 4 chronological phases:
-- Phase 1 (0 to ${Math.round(effectiveDuration * 0.25)}s, ~${Math.round(targetWords * 0.25)} words): Opening hook, setting description, passenger/subject introduction.
-- Phase 2 (${Math.round(effectiveDuration * 0.25)}s to ${Math.round(effectiveDuration * 0.50)}s, ~${Math.round(targetWords * 0.25)} words): Journey details, landscape progression, unfolding action.
-- Phase 3 (${Math.round(effectiveDuration * 0.50)}s to ${Math.round(effectiveDuration * 0.75)}s, ~${Math.round(targetWords * 0.25)} words): Rising curiosity, dramatic twists, storytelling reflections.
-- Phase 4 (${Math.round(effectiveDuration * 0.75)}s to ${effectiveDuration}s, ~${Math.round(targetWords * 0.25)} words): Climax reaction, final resolution, and compelling outro hook.`
+- Phase 1 (0 to ${Math.round(effectiveDuration * 0.25)}s, ~${Math.round(targetWords * 0.25)} words): Opening hook, setting description, subject introduction.
+- Phase 2 (${Math.round(effectiveDuration * 0.25)}s to ${Math.round(effectiveDuration * 0.50)}s, ~${Math.round(targetWords * 0.25)} words): Action progression, high maneuvers, escalating excitement.
+- Phase 3 (${Math.round(effectiveDuration * 0.50)}s to ${Math.round(effectiveDuration * 0.75)}s, ~${Math.round(targetWords * 0.25)} words): Continuous rapid-fire stunts, crowd/viewer reaction, pure adrenaline.
+- Phase 4 (${Math.round(effectiveDuration * 0.75)}s to ${effectiveDuration}s, ~${Math.round(targetWords * 0.25)} words): Peak difficulty maneuvers, breathtaking execution, and final closing hype.`
 		: `Structure your narration continuously:
-- Opening Hook (first 3-5 seconds)
-- Rising Action & movement (middle frames)
-- Dramatic Climax & shocking outcome (final third)
-- Closing resolution to the very last second.`
+- Opening Hook (first 3-5 seconds matching the very first scene)
+- Rapid-fire stunts & thrilling movement (middle frames)
+- Relentless high-adrenaline actions (final third)
+- Closing hype right to the very last second.`
 }
 
 Language: ${language === "bn" ? "Natural, captivating Bangla viral commentary (প্রাকৃতিক আকর্ষণীয় ধারাভাষ্য)" : "Energetic, engaging English viral commentary"}.
