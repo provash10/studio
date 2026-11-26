@@ -19,6 +19,10 @@ export default function CapCutTopNav({
 	hasVideo = false,
 	editMode = "auto",
 	setEditMode,
+	aspectRatio = "9:16",
+	setAspectRatio,
+	videoType = "shorts",
+	setVideoType,
 }) {
 	return (
 		<div className="h-10 bg-[#121316] border-b border-[#212328] px-3 flex items-center justify-between text-xs text-slate-300 select-none">
@@ -86,6 +90,41 @@ export default function CapCutTopNav({
 						title="Manual Mode: Show all checklist cards, checkboxes & sliders"
 					>
 						<span>⚙️ Manual</span>
+					</button>
+				</div>
+
+				{/* Format Selector: Shorts vs Long Video */}
+				<div className="flex items-center bg-[#1a1b20] p-0.5 rounded-lg border border-[#2d2f37]">
+					<button
+						type="button"
+						onClick={() => {
+							if (setVideoType) setVideoType("shorts");
+							if (setAspectRatio) setAspectRatio("9:16");
+						}}
+						className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+							aspectRatio === "9:16"
+								? "bg-gradient-to-r from-rose-500 to-pink-500 text-white font-extrabold shadow-sm"
+								: "text-slate-400 hover:text-white"
+						}`}
+						title="Shorts Mode (9:16 Vertical, YouTube Shorts / TikTok / Reels)"
+					>
+						<span>📱 Shorts (9:16)</span>
+					</button>
+
+					<button
+						type="button"
+						onClick={() => {
+							if (setVideoType) setVideoType("long");
+							if (setAspectRatio) setAspectRatio("16:9");
+						}}
+						className={`px-3 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+							aspectRatio === "16:9"
+								? "bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-extrabold shadow-sm"
+								: "text-slate-400 hover:text-white"
+						}`}
+						title="Long Video Mode (16:9 Landscape Widescreen, YouTube Long-form)"
+					>
+						<span>🖥️ Long Video (16:9)</span>
 					</button>
 				</div>
 

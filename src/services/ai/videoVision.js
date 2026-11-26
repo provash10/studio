@@ -84,23 +84,25 @@ export async function generateScriptWithVideoVision({
 	provider = "gemini",
 	videoTitle = "",
 	fallbackPrompt = "",
+	videoType = "shorts",
 }) {
 	// 1. Extract chronological visual frames
 	let frames = [];
 	try {
-		frames = await extractKeyFrames(videoPath, 5);
+		frames = await extractKeyFrames(videoPath, videoType === "long" ? 7 : 5);
 	} catch (err) {
 		console.warn("Keyframe extraction note:", err.message);
 	}
 
-	const promptText = `You are a viral YouTube Shorts and Long-form video commentary scriptwriter.
+	const isLong = videoType === "long";
+	const promptText = `You are an expert YouTube ${isLong ? "Long-Form Video storytelling and documentary commentary" : "Shorts viral"} scriptwriter.
 You are directly watching chronological scene frames from this video.
 Task:
-1. Examine what is visually happening in these scenes (actions, vehicles, people, drama, climax).
+1. Examine what is visually happening in these scenes across the timeline (actions, vehicles, people, drama, climax).
 2. Write an exciting, high-retention transformative commentary voiceover script matched to what happens in the scenes.
-3. Language: ${language === "bn" ? "Bangla (প্রাকৃতিক আকর্ষণীয় ধারাভাষ্য)" : "English (Viral YouTube Shorts narration)"}.
-4. Length: 35-50 seconds (around 70-100 words).
-5. Style: Hook in the first 3 seconds, explain the escalating tension/action seen in the images, react to the climax!
+3. Language: ${language === "bn" ? "Bangla (প্রাকৃতিক আকর্ষণীয় ধারাভাষ্য)" : "English (Engaging viral narration)"}.
+4. Length: ${isLong ? "Comprehensive Long-form storytelling flow (around 120-180 words)" : "35-50 seconds (around 70-100 words)"}.
+5. Style: ${isLong ? "Engaging narrative storytelling that explains each scene chronologically" : "Hook in the first 3 seconds, explain escalating action, react to the climax!"}.
 6. Output ONLY the voiceover script to be spoken. Do not include markdown headers or stage directions.`;
 
 	// 2. Call Google Gemini with Image Frames

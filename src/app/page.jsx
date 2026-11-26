@@ -18,9 +18,19 @@ export default function CapCutStudio() {
 	const [seekTime, setSeekTime] = useState(null);
 	const [isUploading, setIsUploading] = useState(false);
 
-	// Aspect Ratio
+	// Video Format Type (Shorts vs Long Video)
+	const [videoType, setVideoType] = useState("shorts"); // 'shorts' (9:16) or 'long' (16:9)
 	const [aspectRatio, setAspectRatio] = useState("9:16");
 	const [resolution, setResolution] = useState("1080p");
+
+	const handleVideoTypeChange = (type) => {
+		setVideoType(type);
+		if (type === "shorts") {
+			setAspectRatio("9:16");
+		} else {
+			setAspectRatio("16:9");
+		}
+	};
 
 	// Left Editing Checklist States
 	const [blackBgLayer, setBlackBgLayer] = useState(true); // black.jpg solid layer
@@ -169,6 +179,7 @@ export default function CapCutStudio() {
 							provider: "auto",
 							videoTitle,
 							videoFilename,
+							videoType,
 						}),
 					});
 					const scriptData = await scriptRes.json();
@@ -215,6 +226,7 @@ export default function CapCutStudio() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					filename: videoFilename,
+					videoType,
 					aspectRatio,
 					resolution,
 					trim: {
@@ -322,6 +334,10 @@ export default function CapCutStudio() {
 				hasVideo={Boolean(videoFilename)}
 				editMode={editMode}
 				setEditMode={handleSetEditMode}
+				aspectRatio={aspectRatio}
+				setAspectRatio={setAspectRatio}
+				videoType={videoType}
+				setVideoType={handleVideoTypeChange}
 			/>
 
 			{/* 2. CapCut Middle Workspace (3 Columns: Left Panel Expanded, Center Player, Right Panel Expanded) */}
@@ -471,6 +487,8 @@ export default function CapCutStudio() {
 						setSyncVoiceSpeed={setSyncVoiceSpeed}
 						videoTitle={videoTitle}
 						videoFilename={videoFilename}
+						videoType={videoType}
+						setVideoType={handleVideoTypeChange}
 					/>
 				</div>
 			</div>

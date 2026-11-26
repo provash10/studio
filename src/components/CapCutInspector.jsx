@@ -68,6 +68,8 @@ export default function CapCutInspector({
 	setSyncVoiceSpeed,
 	videoTitle,
 	videoFilename,
+	videoType = "shorts",
+	setVideoType,
 }) {
 	const [activeTopTab, setActiveTopTab] = useState("video"); // 'video', 'voice', 'animation', 'adjustment'
 	const [activeSubTab, setActiveSubTab] = useState("basic"); // 'basic', 'cutout', 'mask'
@@ -117,6 +119,7 @@ export default function CapCutInspector({
 					provider: selectedModel,
 					videoTitle,
 					videoFilename,
+					videoType,
 				}),
 			});
 			const data = await res.json();

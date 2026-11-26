@@ -13,6 +13,7 @@ export async function POST(request) {
 			apiKey,
 			videoTitle = "",
 			videoFilename = "",
+			videoType = "shorts",
 		} = await request.json();
 
 		// Auto-detect Gemini API Key if none was passed
@@ -46,6 +47,7 @@ export async function POST(request) {
 					provider: provider === "auto" ? "gemini" : provider,
 					videoTitle,
 					fallbackPrompt: prompt,
+					videoType,
 				});
 
 				if (visionResult.success && visionResult.script) {
