@@ -39,3 +39,22 @@ export async function POST(request) {
 		return NextResponse.json({ error: error.message }, { status: 500 });
 	}
 }
+
+export async function DELETE(request) {
+	try {
+		const { searchParams } = new URL(request.url);
+		const filename = searchParams.get("filename");
+
+		if (filename) {
+			const safeFilename = path.basename(filename);
+			const uploadDir = path.join(process.cwd(), "public", "uploads");
+			const filePath = path.join(uploadDir, safeFilename);
+			await fs.unlink(filePath).catch(() => {});
+		}
+
+		return NextResponse.json({ success: true, message: "File removed successfully" });
+	} catch (error) {
+		console.error("Delete upload error:", error);
+		return NextResponse.json({ error: error.message }, { status: 500 });
+	}
+}

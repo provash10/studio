@@ -133,7 +133,11 @@ export default function CapCutStudio() {
 		setExportResult(null);
 		setProcessedVideoUrl(null);
 		setProcessedFilename(null);
+		setVoiceoverFileName(null);
+		setVoiceoverEnabled(true);
 		setPreviewMode("raw");
+		setCurrentTime(0);
+		setSeekTime(null);
 
 		const formData = new FormData();
 		formData.append("file", file);
@@ -148,17 +152,27 @@ export default function CapCutStudio() {
 				setVideoFilename(data.filename);
 				setVideoUrl(data.url);
 				setVideoTitle(file.name);
-				if (data.metadata?.duration) {
-					setDuration(data.metadata.duration);
-				}
+				const videoDur = data.metadata?.duration || 30;
+				setDuration(videoDur);
+
 				if (file.name.includes("1122")) {
 					setAutoTrim40s(true);
 					setTrimStart(8.5);
-					setTrimEnd(data.metadata?.duration || 45.58);
+					setTrimEnd(videoDur || 45.58);
 					setCliffhangerHook({
 						enabled: true,
 						start: 40.5,
 						end: 43.0,
+						text: "WAIT FOR IT... 🔥",
+					});
+				} else {
+					setAutoTrim40s(false);
+					setTrimStart(0);
+					setTrimEnd(videoDur);
+					setCliffhangerHook({
+						enabled: false,
+						start: 0,
+						end: Math.min(3, videoDur),
 						text: "WAIT FOR IT... 🔥",
 					});
 				}
@@ -170,6 +184,42 @@ export default function CapCutStudio() {
 		} finally {
 			setIsUploading(false);
 		}
+	};
+
+	// Delete / Clear Video Handler
+	const handleDeleteVideo = async () => {
+		if (videoFilename && !videoFilename.startsWith("sample_")) {
+			try {
+				await fetch(`/api/upload?filename=${encodeURIComponent(videoFilename)}`, { method: "DELETE" });
+			} catch (e) {
+				console.warn("Delete video error:", e);
+			}
+		}
+		setVideoFilename(null);
+		setVideoUrl(null);
+		setVideoTitle("");
+		setDuration(0);
+		setProcessedVideoUrl(null);
+		setProcessedFilename(null);
+		setExportResult(null);
+		setPreviewMode("raw");
+		setVoiceoverFileName(null);
+		setVoiceoverEnabled(false);
+		setAutoTrim40s(false);
+		setTrimStart(0);
+		setTrimEnd(0);
+		setCliffhangerHook({ enabled: false, start: 0, end: 0, text: "WAIT FOR IT... 🔥" });
+		setCurrentTime(0);
+		setSeekTime(null);
+	};
+
+	// Clear Rendered Output Handler
+	const handleDeleteRendered = () => {
+		setProcessedVideoUrl(null);
+		setProcessedFilename(null);
+		setExportResult(null);
+		setPreviewMode("raw");
+		setVoiceoverFileName(null);
 	};
 
 	// Quick Load Sample Video
@@ -398,6 +448,8 @@ export default function CapCutStudio() {
 					<CapCutMediaLibrary
 						onFileUpload={handleFileUpload}
 						onLoadSample={handleLoadSample}
+						onDeleteVideo={handleDeleteVideo}
+						onDeleteRendered={handleDeleteRendered}
 						uploadedVideo={videoUrl}
 						videoTitle={videoTitle}
 						duration={duration}
