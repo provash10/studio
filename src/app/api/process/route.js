@@ -3,6 +3,7 @@ import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
 import { runFFmpeg, probeVideo } from "@/lib/ffmpeg";
+import { convertSegmentsToSRT, getASSForceStyle } from "@/services/ai/captionService";
 
 export async function POST(request) {
 	try {
@@ -46,7 +47,11 @@ export async function POST(request) {
 			showStickerOverlay = false,
 			stickerPosition = { x: 85, y: 85 },
 			stickerScale = 1.0,
+			// Auto Captions (Subtitles)
+			autoCaption = { enabled: false, style: "viral_yellow", segments: [], position: "bottom", scale: 1.0 },
 		} = data;
+
+		const tempFilesToClean = [];
 
 		if (!filename) {
 			return NextResponse.json(
@@ -333,6 +338,29 @@ export async function POST(request) {
 			baseV = "[vstick]";
 		}
 
+		// 6.7 Auto Captions (Timed Subtitles Overlay with CapCut Force Style)
+		if (autoCaption && autoCaption.enabled && (autoCaption.segments?.length || autoCaption.srt)) {
+			const srtContent = autoCaption.srt || convertSegmentsToSRT(autoCaption.segments);
+			if (srtContent && srtContent.trim()) {
+				const uploadDir = path.join(process.cwd(), "public", "uploads");
+				const tempCaptionPath = path.join(uploadDir, `caption_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.srt`);
+				await fs.writeFile(tempCaptionPath, srtContent, "utf-8");
+				tempFilesToClean.push(tempCaptionPath);
+
+				const captionFontSize = Math.max(16, Math.round(tH * 0.038 * (Number(autoCaption.scale) || 1.0)));
+				const forceStyle = getASSForceStyle({
+					style: autoCaption.style || "viral_yellow",
+					fontSize: captionFontSize,
+					position: autoCaption.position || "bottom",
+				});
+
+				// Normalize path for FFmpeg subtitles filter on Windows: replace \ with / and escape colon
+				const safeSrtPath = tempCaptionPath.replace(/\\/g, "/").replace(/:/g, "\\:");
+				filters.push(`${baseV}subtitles='${safeSrtPath}':force_style='${forceStyle}'[vcaption]`);
+				baseV = "[vcaption]";
+			}
+		}
+
 		// Calculate target duration adjusted for video speed so FFmpeg never loops indefinitely
 		let rawDuration = (trim.enabled && trim.end > trim.start)
 			? (trim.end - trim.start)
@@ -476,5 +504,12 @@ export async function POST(request) {
 			{ error: error.message || "Failed to process video" },
 			{ status: 500 },
 		);
+	} finally {
+		// Clean up any temporary subtitle files
+		for (const tmp of tempFilesToClean) {
+			try {
+				await fs.unlink(tmp);
+			} catch {}
+		}
 	}
 }

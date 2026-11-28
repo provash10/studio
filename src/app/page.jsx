@@ -83,6 +83,18 @@ export default function CapCutStudio() {
 	const [activeTransition, setActiveTransition] = useState("crossfade");
 	const [activeTopTab, setActiveTopTab] = useState("media");
 
+	// Auto Captions (Subtitles) State
+	const [currentScript, setCurrentScript] = useState("");
+	const [autoCaption, setAutoCaption] = useState({
+		enabled: true, // Enabled by default for modern viral shorts/reels!
+		style: "viral_yellow", // 'viral_yellow', 'classic_white', 'neon_cyan', 'green_meme'
+		position: "bottom", // 'bottom', 'center', 'top'
+		scale: 1.0,
+		wordsPerSegment: 3,
+		segments: [],
+		isGenerating: false,
+	});
+
 	// Voiceover States
 	const [voiceoverEnabled, setVoiceoverEnabled] = useState(true);
 	const [voiceoverFileName, setVoiceoverFileName] = useState(null);
@@ -124,6 +136,55 @@ export default function CapCutStudio() {
 	const [previewMode, setPreviewMode] = useState("copyright_free"); // 'raw' or 'copyright_free'
 	const [exportResult, setExportResult] = useState(null);
 	const [errorMessage, setErrorMessage] = useState("");
+
+	// Generate Auto Captions (From Script or Video Commentary)
+	const handleGenerateAutoCaptions = async () => {
+		setAutoCaption(prev => ({ ...prev, isGenerating: true }));
+		try {
+			let textToUse = currentScript;
+			if (!textToUse) {
+				const sRes = await fetch("/api/ai/script", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						videoFilename,
+						duration: duration || 36,
+						videoSpeed,
+						trimStart: autoTrim40s ? trimStart : 0,
+						trimEnd: autoTrim40s ? trimEnd : 0,
+					}),
+				});
+				const sData = await sRes.json();
+				textToUse = sData.script || (selectedVoice.startsWith("bn-") ? "ভিডিওটির ক্লাইম্যাক্স মুহূর্ত লক্ষ্য করুন!" : "Wait for it! Watch this incredible video right now!");
+				setCurrentScript(textToUse);
+			}
+
+			const cRes = await fetch("/api/ai/captions", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					text: textToUse,
+					duration: duration || 36,
+					style: autoCaption.style,
+					wordsPerSegment: autoCaption.wordsPerSegment || 3,
+				}),
+			});
+			const cData = await cRes.json();
+			if (cData.success && cData.segments) {
+				setAutoCaption(prev => ({
+					...prev,
+					enabled: true,
+					segments: cData.segments,
+					srt: cData.srt,
+					isGenerating: false,
+				}));
+			}
+		} catch (err) {
+			console.error("Auto caption generation error:", err);
+		} finally {
+			setAutoCaption(prev => ({ ...prev, isGenerating: false }));
+		}
+	};
 
 	// Upload Video Handler
 	const handleFileUpload = async (file) => {
@@ -282,6 +343,8 @@ export default function CapCutStudio() {
 						: "Wait until you see what happens next in this incredible video! Watch closely right now!";
 				}
 
+				setCurrentScript(script);
+
 				setCreatingStatus("2/3 Synthesizing AI voiceover...");
 				try {
 					const savedElevenKey = typeof window !== "undefined" ? localStorage.getItem("studio_elevenlabs_key") : "";
@@ -309,6 +372,34 @@ export default function CapCutStudio() {
 				}
 			}
 
+			// Automatically generate timed auto captions from script if enabled
+			let captionPayload = autoCaption;
+			if (autoCaption.enabled) {
+				try {
+					const capRes = await fetch("/api/ai/captions", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							text: currentScript || (selectedVoice.startsWith("bn-") ? "ভিডিওটির ক্লাইম্যাক্স মুহূর্ত লক্ষ্য করুন!" : "Wait for it! Watch this incredible video right now!"),
+							duration: duration || 36,
+							style: autoCaption.style,
+							wordsPerSegment: autoCaption.wordsPerSegment || 3,
+						}),
+					});
+					const capData = await capRes.json();
+					if (capData.success && capData.segments) {
+						captionPayload = {
+							...autoCaption,
+							segments: capData.segments,
+							srt: capData.srt,
+						};
+						setAutoCaption(captionPayload);
+					}
+				} catch (capErr) {
+					console.warn("Auto caption generation note:", capErr);
+				}
+			}
+
 			setCreatingStatus("3/3 Rendering anti-copyright video with FFmpeg...");
 			console.log("create video request initiated with anti-copyright filters and voiceover");
 			const res = await fetch("/api/process", {
@@ -325,6 +416,7 @@ export default function CapCutStudio() {
 						end: trimEnd,
 					},
 					cliffhangerHook,
+					autoCaption: captionPayload,
 					mirror,
 					blackBgLayer,
 					videoScale,
@@ -472,6 +564,10 @@ export default function CapCutStudio() {
 						setCliffhangerHook={setCliffhangerHook}
 						activeTopTab={activeTopTab}
 						setActiveTopTab={setActiveTopTab}
+						// Auto Captions
+						autoCaption={autoCaption}
+						setAutoCaption={setAutoCaption}
+						onGenerateAutoCaptions={handleGenerateAutoCaptions}
 						// Audio tools
 						onCreateVideo={handleCreateVideo}
 						isCreatingVideo={isCreatingVideo}
@@ -547,6 +643,7 @@ export default function CapCutStudio() {
 						setStickerPosition={setStickerPosition}
 						stickerScale={stickerScale}
 						setStickerScale={setStickerScale}
+						autoCaption={autoCaption}
 						currentTime={currentTime}
 						duration={duration}
 						onTimeUpdate={(t) => setCurrentTime(t)}

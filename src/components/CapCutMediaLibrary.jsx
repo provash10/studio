@@ -37,6 +37,7 @@ import {
 	BookmarkPlus,
 	Headphones,
 	FileAudio,
+	Loader2,
 } from "lucide-react";
 
 export default function CapCutMediaLibrary({
@@ -69,6 +70,10 @@ export default function CapCutMediaLibrary({
 	// Active Top Tab
 	activeTopTab = "media",
 	setActiveTopTab,
+	// Auto Captions Props
+	autoCaption = { enabled: true, style: "viral_yellow", position: "bottom", scale: 1.0, segments: [] },
+	setAutoCaption,
+	onGenerateAutoCaptions,
 	// Video Creation Props
 	onCreateVideo,
 	isCreatingVideo = false,
@@ -1175,7 +1180,7 @@ export default function CapCutMediaLibrary({
 							Text Overlays & Captions
 						</span>
 						<label className="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer">
-							<span>Show on Video:</span>
+							<span>Show Banner Text:</span>
 							<input
 								type="checkbox"
 								checked={showTextOverlay}
@@ -1183,6 +1188,234 @@ export default function CapCutMediaLibrary({
 								className="accent-[#00e5ff] w-3.5 h-3.5 cursor-pointer"
 							/>
 						</label>
+					</div>
+
+					{/* ✨ Auto Captions (স্বয়ংক্রিয় সাবটাইটেল) Section */}
+					<div className={`p-3 rounded-xl border transition-all ${autoCaption?.enabled ? "bg-[#16171d] border-[#00e5ff]/60 shadow-lg shadow-cyan-950/30" : "bg-[#18191c] border-[#26282f]"}`}>
+						<div className="flex items-center justify-between pb-2 border-b border-[#26282f]">
+							<div className="flex items-center gap-2">
+								<span className="w-5 h-5 rounded-md bg-gradient-to-tr from-[#00e5ff] to-blue-500 text-black flex items-center justify-center font-bold text-xs shadow-sm">
+									CC
+								</span>
+								<div>
+									<div className="text-[11.5px] font-extrabold text-white flex items-center gap-1.5">
+										<span>Auto Captions (স্বয়ংক্রিয় সাবটাইটেল)</span>
+										<span className="text-[8.5px] bg-[#00e5ff]/20 text-[#00e5ff] px-1.5 py-0.2 rounded font-mono font-bold">
+											{autoCaption?.enabled ? "Active" : "Off"}
+										</span>
+									</div>
+									<p className="text-[9.5px] text-slate-400 mt-0.5">
+										ভিডিও ভয়েস বা স্ক্রিপ্ট থেকে স্বয়ংক্রিয়ভাবে ভাইরাল শর্টস ক্যাপশন তৈরি করুন
+									</p>
+								</div>
+							</div>
+							<label className="flex items-center gap-1.5 text-[10px] text-slate-300 cursor-pointer">
+								<input
+									type="checkbox"
+									checked={Boolean(autoCaption?.enabled)}
+									onChange={(e) => {
+										if (setAutoCaption) {
+											setAutoCaption(prev => ({ ...(prev || {}), enabled: e.target.checked }));
+										}
+									}}
+									className="accent-[#00e5ff] w-4 h-4 cursor-pointer"
+								/>
+								<span className="font-bold text-[#00e5ff]">{autoCaption?.enabled ? "চালু" : "বন্ধ"}</span>
+							</label>
+						</div>
+
+						{/* 1-Click Generate Auto Captions Button */}
+						<div className="mt-2.5">
+							<button
+								type="button"
+								onClick={() => onGenerateAutoCaptions && onGenerateAutoCaptions()}
+								disabled={autoCaption?.isGenerating}
+								className={`w-full py-2 px-3 rounded-lg text-[11px] font-extrabold border transition-all flex items-center justify-center gap-2 cursor-pointer shadow ${
+									autoCaption?.isGenerating
+										? "bg-[#202227] text-slate-400 border-[#2f323a] cursor-not-allowed"
+										: autoCaption?.segments?.length > 0
+										? "bg-[#0c181c] text-[#00e5ff] border-[#00e5ff]/70 hover:bg-[#122329]"
+										: "bg-gradient-to-r from-[#00e5ff] to-[#00b4d8] text-black border-transparent hover:brightness-110 shadow-cyan-950/60"
+								}`}
+							>
+								{autoCaption?.isGenerating ? (
+									<>
+										<Loader2 className="w-3.5 h-3.5 animate-spin text-[#00e5ff]" />
+										<span>ক্যাপশন তৈরি হচ্ছে... (Analyzing...)</span>
+									</>
+								) : (
+									<>
+										<Sparkles className="w-3.5 h-3.5" />
+										<span>
+											{autoCaption?.segments?.length > 0
+												? `🔄 রি-জেনারেট ক্যাপশন (${autoCaption.segments.length} টি ক্লিপ)`
+												: "✨ Generate Auto Captions (ক্যাপশন তৈরি করুন)"}
+										</span>
+									</>
+								)}
+							</button>
+						</div>
+
+						{/* Style Selector: 4 Visual CapCut Presets */}
+						<div className="mt-2.5 flex flex-col gap-1.5">
+							<span className="text-[10px] font-bold text-slate-300">ক্যাপশন স্টাইল (Caption Style):</span>
+							<div className="grid grid-cols-2 gap-1.5">
+								{/* Viral Yellow */}
+								<button
+									type="button"
+									onClick={() => setAutoCaption && setAutoCaption(prev => ({ ...(prev || {}), style: "viral_yellow", enabled: true }))}
+									className={`p-2 rounded-lg border text-left flex items-center justify-between cursor-pointer transition-all ${
+										autoCaption?.style === "viral_yellow"
+											? "bg-[#25220c] border-yellow-400 text-yellow-300 shadow-md shadow-yellow-950/40"
+											: "bg-[#141518] border-[#26282f] text-slate-300 hover:border-slate-500"
+									}`}
+								>
+									<div className="flex flex-col">
+										<span className="text-[10.5px] font-extrabold text-yellow-300">🟡 Viral Yellow</span>
+										<span className="text-[8.5px] text-slate-400">Shorts / Hormozi Style</span>
+									</div>
+									<span className="px-1.5 py-0.5 rounded bg-black text-yellow-300 font-black text-[9px] border border-yellow-400">
+										WAIT!
+									</span>
+								</button>
+
+								{/* Classic White */}
+								<button
+									type="button"
+									onClick={() => setAutoCaption && setAutoCaption(prev => ({ ...(prev || {}), style: "classic_white", enabled: true }))}
+									className={`p-2 rounded-lg border text-left flex items-center justify-between cursor-pointer transition-all ${
+										autoCaption?.style === "classic_white"
+											? "bg-[#1f2025] border-white text-white shadow-md"
+											: "bg-[#141518] border-[#26282f] text-slate-300 hover:border-slate-500"
+									}`}
+								>
+									<div className="flex flex-col">
+										<span className="text-[10.5px] font-extrabold text-white">⚪ Classic White</span>
+										<span className="text-[8.5px] text-slate-400">Clean YouTube Outline</span>
+									</div>
+									<span className="px-1.5 py-0.5 rounded bg-black/80 text-white font-black text-[9px] border border-white/50">
+										LOOK!
+									</span>
+								</button>
+
+								{/* Neon Cyan */}
+								<button
+									type="button"
+									onClick={() => setAutoCaption && setAutoCaption(prev => ({ ...(prev || {}), style: "neon_cyan", enabled: true }))}
+									className={`p-2 rounded-lg border text-left flex items-center justify-between cursor-pointer transition-all ${
+										autoCaption?.style === "neon_cyan"
+											? "bg-[#0b1b1f] border-[#00e5ff] text-[#00e5ff] shadow-md shadow-cyan-950/40"
+											: "bg-[#141518] border-[#26282f] text-slate-300 hover:border-slate-500"
+									}`}
+								>
+									<div className="flex flex-col">
+										<span className="text-[10.5px] font-extrabold text-[#00e5ff]">🔵 Neon Cyan</span>
+										<span className="text-[8.5px] text-slate-400">Glow & Tech Style</span>
+									</div>
+									<span className="px-1.5 py-0.5 rounded bg-black text-[#00e5ff] font-black text-[9px] border border-[#00e5ff]">
+										CYAN!
+									</span>
+								</button>
+
+								{/* Vibrant Green */}
+								<button
+									type="button"
+									onClick={() => setAutoCaption && setAutoCaption(prev => ({ ...(prev || {}), style: "green_meme", enabled: true }))}
+									className={`p-2 rounded-lg border text-left flex items-center justify-between cursor-pointer transition-all ${
+										autoCaption?.style === "green_meme"
+											? "bg-[#0c1f15] border-emerald-400 text-emerald-300 shadow-md shadow-emerald-950/40"
+											: "bg-[#141518] border-[#26282f] text-slate-300 hover:border-slate-500"
+									}`}
+								>
+									<div className="flex flex-col">
+										<span className="text-[10.5px] font-extrabold text-emerald-300">🟢 Vibrant Green</span>
+										<span className="text-[8.5px] text-slate-400">Viral Action Highlight</span>
+									</div>
+									<span className="px-1.5 py-0.5 rounded bg-black text-emerald-300 font-black text-[9px] border border-emerald-400">
+										FIRE!
+									</span>
+								</button>
+							</div>
+						</div>
+
+						{/* Position & Scale Adjustments */}
+						<div className="mt-2.5 pt-2 border-t border-[#26282f] grid grid-cols-2 gap-2 text-[10px]">
+							<div className="flex flex-col gap-1">
+								<span className="text-slate-400">পজিশন (Position):</span>
+								<div className="grid grid-cols-3 gap-1">
+									{["top", "center", "bottom"].map((p) => (
+										<button
+											key={p}
+											type="button"
+											onClick={() => setAutoCaption && setAutoCaption(prev => ({ ...(prev || {}), position: p }))}
+											className={`py-1 rounded font-bold capitalize transition-all border cursor-pointer ${
+												(autoCaption?.position || "bottom") === p
+													? "bg-[#172b32] border-[#00e5ff] text-[#00e5ff]"
+													: "bg-[#121316] border-[#282a32] text-slate-400 hover:text-white"
+											}`}
+										>
+											{p}
+										</button>
+									))}
+								</div>
+							</div>
+
+							<div className="flex flex-col gap-1">
+								<span className="text-slate-400 flex justify-between">
+									<span>সাইজ (Size):</span>
+									<span className="text-[#00e5ff] font-mono font-bold">{(autoCaption?.scale || 1.0).toFixed(1)}x</span>
+								</span>
+								<input
+									type="range"
+									min="0.8"
+									max="1.8"
+									step="0.1"
+									value={autoCaption?.scale || 1.0}
+									onChange={(e) => setAutoCaption && setAutoCaption(prev => ({ ...(prev || {}), scale: Number(e.target.value) }))}
+									className="w-full accent-[#00e5ff] h-1 bg-[#23242c] rounded cursor-pointer mt-1"
+								/>
+							</div>
+						</div>
+
+						{/* Generated Caption Phrases / Timed Segments Preview */}
+						{autoCaption?.segments?.length > 0 && (
+							<div className="mt-2.5 pt-2 border-t border-[#26282f] flex flex-col gap-1.5">
+								<div className="flex items-center justify-between text-[10px]">
+									<span className="font-bold text-[#00e5ff]">
+										ক্যাপশন লিস্ট ({autoCaption.segments.length} টি সেগমেন্ট):
+									</span>
+									<button
+										type="button"
+										onClick={() => setAutoCaption && setAutoCaption(prev => ({ ...(prev || {}), segments: [] }))}
+										className="text-slate-500 hover:text-red-400 text-[9px] transition-colors"
+									>
+										Clear List
+									</button>
+								</div>
+								<div className="max-h-36 overflow-y-auto flex flex-col gap-1 pr-1 bg-[#121316] p-1.5 rounded-lg border border-[#26282f]">
+									{autoCaption.segments.map((seg, sIdx) => (
+										<div
+											key={seg.id || sIdx}
+											className="flex items-center justify-between gap-1.5 p-1 rounded bg-[#18191c] border border-[#212328] text-[9.5px]"
+										>
+											<span className="text-slate-500 font-mono text-[8.5px] shrink-0">
+												{seg.start}s - {seg.end}s
+											</span>
+											<input
+												type="text"
+												value={seg.text}
+												onChange={(e) => {
+													const updated = [...autoCaption.segments];
+													updated[sIdx] = { ...updated[sIdx], text: e.target.value };
+													setAutoCaption(prev => ({ ...prev, segments: updated }));
+												}}
+												className="flex-1 bg-transparent text-slate-200 border-none focus:outline-none focus:bg-[#202227] px-1 rounded truncate font-medium"
+											/>
+										</div>
+									))}
+								</div>
+							</div>
+						)}
 					</div>
 
 					{/* Custom Text Input & Save Button */}

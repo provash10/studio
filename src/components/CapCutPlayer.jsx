@@ -43,6 +43,7 @@ export default function CapCutPlayer({
 	setStickerPosition,
 	stickerScale = 1.0,
 	setStickerScale,
+	autoCaption = { enabled: false, segments: [], style: "viral_yellow", position: "bottom", scale: 1.0 },
 	currentTime = 0,
 	duration = 36.22,
 	onTimeUpdate,
@@ -423,6 +424,37 @@ export default function CapCutPlayer({
 							<span>100% Anti-Copyright Verified Output (Sound Muted + BGM Mixed)</span>
 						</div>
 					)}
+
+					{/* Auto Captions (Timed Subtitles Overlay in Live Preview) */}
+					{autoCaption?.enabled && autoCaption?.segments?.length > 0 && !isCopyrightFreeActive && (() => {
+						const currentSec = currentTime || 0;
+						const activeSegment = autoCaption.segments.find(s => currentSec >= s.start && currentSec <= s.end);
+						if (!activeSegment) return null;
+
+						let posClasses = "bottom-[12%]";
+						if (autoCaption.position === "center") posClasses = "top-1/2 -translate-y-1/2";
+						else if (autoCaption.position === "top") posClasses = "top-[14%]";
+
+						let styleClasses = "bg-black/90 border-2 border-yellow-400 text-yellow-300 shadow-xl shadow-yellow-950/40";
+						if (autoCaption.style === "classic_white") {
+							styleClasses = "bg-black/85 border border-white/40 text-white font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,1)] shadow-xl";
+						} else if (autoCaption.style === "neon_cyan") {
+							styleClasses = "bg-black/90 border-2 border-[#00e5ff] text-[#00e5ff] shadow-[0_0_15px_rgba(0,229,255,0.6)]";
+						} else if (autoCaption.style === "green_meme") {
+							styleClasses = "bg-black/90 border-2 border-emerald-400 text-emerald-300 shadow-[0_0_15px_rgba(34,197,94,0.6)]";
+						}
+
+						return (
+							<div
+								className={`absolute left-1/2 -translate-x-1/2 z-30 select-none pointer-events-none px-3.5 py-1.5 rounded-lg text-center font-black tracking-wide uppercase transition-all duration-100 max-w-[88%] whitespace-normal leading-tight ${posClasses} ${styleClasses}`}
+								style={{
+									fontSize: `${Math.max(13, Math.round(15 * (Number(autoCaption.scale) || 1.0)))}px`,
+								}}
+							>
+								<span className="drop-shadow-md">{activeSegment.text}</span>
+							</div>
+						);
+					})()}
 
 					{/* Text Overlay (Hook / Captions) - 100% Freely Draggable & Fixed Rigid Box */}
 					{showTextOverlay && textOverlay && !isCopyrightFreeActive && (

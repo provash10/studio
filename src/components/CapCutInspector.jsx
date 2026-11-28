@@ -305,6 +305,10 @@ export default function CapCutInspector({
 										<CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
 										<span>Fast 1.10x Pacing: Synchronized Video & Voice Speed Boost</span>
 									</div>
+									<div className="flex items-center gap-2">
+										<CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+										<span>Viral Auto Captions (Timed Subtitles Burned-In)</span>
+									</div>
 								</div>
 							</div>
 
