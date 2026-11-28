@@ -74,6 +74,10 @@ export default function CapCutMediaLibrary({
 	autoCaption = { enabled: true, style: "viral_yellow", position: "bottom", scale: 1.0, segments: [] },
 	setAutoCaption,
 	onGenerateAutoCaptions,
+	// Direct Voice Generation Props
+	onGenerateVoice,
+	isGeneratingVoice = false,
+	voiceoverFileName = null,
 	// Video Creation Props
 	onCreateVideo,
 	isCreatingVideo = false,
@@ -651,8 +655,38 @@ export default function CapCutMediaLibrary({
 										)}
 									</div>
 
-									{/* Action Button: Create Copyright-Free Video */}
-									<div className="pt-2 border-t border-[#212328] flex flex-col gap-1 shrink-0">
+									{/* Action Buttons: 1-Click AI Voice + Full Render */}
+									<div className="pt-2 border-t border-[#212328] flex flex-col gap-1.5 shrink-0">
+										<button
+											type="button"
+											onClick={onGenerateVoice}
+											disabled={isGeneratingVoice || !uploadedVideo}
+											className={`w-full py-1.5 rounded-md font-bold text-[11px] flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer ${
+												isGeneratingVoice
+													? "bg-purple-950/80 text-purple-300 border border-purple-500/50 cursor-wait"
+													: voiceoverFileName
+													? "bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/60"
+													: "bg-purple-600 hover:bg-purple-500 text-white shadow-purple-950"
+											}`}
+											title="Generate commentary script and Edge-TTS voiceover instantly"
+										>
+											{isGeneratingVoice ? (
+												<>
+													<Loader2 className="w-3.5 h-3.5 animate-spin text-purple-400" />
+													<span>Generating AI Voice...</span>
+												</>
+											) : voiceoverFileName ? (
+												<>
+													<span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+													<span>🎙️ Voice Ready (Click to Re-generate)</span>
+												</>
+											) : (
+												<>
+													<span>🎙️ Generate AI Voiceover & Captions</span>
+												</>
+											)}
+										</button>
+
 										<button
 											type="button"
 											onClick={() => onCreateVideo && onCreateVideo({ forceNewVoice: true })}

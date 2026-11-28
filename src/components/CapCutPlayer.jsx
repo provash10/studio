@@ -49,6 +49,15 @@ export default function CapCutPlayer({
 	onTimeUpdate,
 	onDurationChange,
 	seekTime = null,
+	// Audio multi-track synchronization
+	voiceoverFileName = null,
+	voiceoverEnabled = true,
+	voiceoverVolume = 1.4,
+	bgmTrackName = "bg3.mp4",
+	bgmEnabled = true,
+	bgmVolume = 0.25,
+	onGenerateVoice,
+	isGeneratingVoice = false,
 	// New requested buttons & preview states
 	onCreateVideo,
 	isCreatingVideo = false,
@@ -59,6 +68,8 @@ export default function CapCutPlayer({
 	onExport,
 }) {
 	const videoRef = useRef(null);
+	const voiceAudioRef = useRef(null);
+	const bgmAudioRef = useRef(null);
 	const canvasRef = useRef(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [previewToast, setPreviewToast] = useState(false);
@@ -164,9 +175,51 @@ export default function CapCutPlayer({
 		};
 	}, [isDraggingSticker, setStickerPosition]);
 
+	const isCopyrightFreeActive = previewMode === "copyright_free" && Boolean(processedVideoUrl);
+	const activeVideoSrc = isCopyrightFreeActive ? processedVideoUrl : videoUrl;
+
+	const syncAudios = (shouldPlay) => {
+		if (isCopyrightFreeActive) {
+			if (voiceAudioRef.current) voiceAudioRef.current.pause();
+			if (bgmAudioRef.current) bgmAudioRef.current.pause();
+			return;
+		}
+
+		const curTime = videoRef.current ? videoRef.current.currentTime : 0;
+
+		// 1. Synchronized Voiceover Audio
+		if (voiceAudioRef.current && voiceoverFileName && voiceoverEnabled) {
+			if (shouldPlay) {
+				voiceAudioRef.current.currentTime = curTime;
+				voiceAudioRef.current.volume = 1.0;
+				voiceAudioRef.current.play().catch(() => {});
+			} else {
+				voiceAudioRef.current.pause();
+			}
+		}
+
+		// 2. Synchronized BGM Audio (ducked under speech)
+		if (bgmAudioRef.current && bgmEnabled && bgmTrackName) {
+			if (shouldPlay) {
+				if (bgmAudioRef.current.duration) {
+					bgmAudioRef.current.currentTime = curTime % bgmAudioRef.current.duration;
+				}
+				bgmAudioRef.current.volume = voiceoverFileName ? 0.12 : (bgmVolume || 0.25);
+				bgmAudioRef.current.loop = true;
+				bgmAudioRef.current.play().catch(() => {});
+			} else {
+				bgmAudioRef.current.pause();
+			}
+		}
+	};
+
 	useEffect(() => {
 		if (videoRef.current && seekTime !== null) {
 			videoRef.current.currentTime = seekTime;
+			if (voiceAudioRef.current) voiceAudioRef.current.currentTime = seekTime;
+			if (bgmAudioRef.current && bgmAudioRef.current.duration) {
+				bgmAudioRef.current.currentTime = seekTime % bgmAudioRef.current.duration;
+			}
 		}
 	}, [seekTime]);
 
@@ -176,17 +229,20 @@ export default function CapCutPlayer({
 			videoRef.current.currentTime = 0;
 			videoRef.current.play().catch(() => {});
 			setIsPlaying(true);
+			syncAudios(true);
 		}
 	}, [previewMode, processedVideoUrl]);
 
 	const togglePlay = () => {
 		if (!videoRef.current) return;
 		if (videoRef.current.paused) {
-			videoRef.current.play();
+			videoRef.current.play().catch(() => {});
 			setIsPlaying(true);
+			syncAudios(true);
 		} else {
 			videoRef.current.pause();
 			setIsPlaying(false);
+			syncAudios(false);
 		}
 	};
 
@@ -196,6 +252,7 @@ export default function CapCutPlayer({
 		if (setPreviewMode && processedVideoUrl) {
 			setPreviewMode("copyright_free");
 		}
+		syncAudios(false);
 		if (videoRef.current) {
 			videoRef.current.currentTime = 0;
 			videoRef.current.play().catch(() => {});
@@ -225,8 +282,6 @@ export default function CapCutPlayer({
 	}
 
 	const scaleRatio = videoScale / 100;
-	const isCopyrightFreeActive = previewMode === "copyright_free" && Boolean(processedVideoUrl);
-	const activeVideoSrc = isCopyrightFreeActive ? processedVideoUrl : videoUrl;
 
 	return (
 		<div className="h-full flex flex-col bg-[#111215] select-none text-xs">
@@ -270,6 +325,37 @@ export default function CapCutPlayer({
 
 				{/* Primary Action Buttons */}
 				<div className="flex items-center gap-2">
+					{/* Dedicated 1-Click AI Voice Generator Button */}
+					<button
+						type="button"
+						onClick={onGenerateVoice}
+						disabled={isGeneratingVoice || !videoUrl}
+						className={`px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1.5 shadow transition-all cursor-pointer ${
+							isGeneratingVoice
+								? "bg-purple-950/80 text-purple-300 border border-purple-500/50 cursor-wait"
+								: voiceoverFileName
+								? "bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/60"
+								: "bg-purple-600 hover:bg-purple-500 text-white shadow-purple-950"
+						}`}
+						title="Generate AI Commentary and Edge-TTS voiceover with instant audio preview"
+					>
+						{isGeneratingVoice ? (
+							<>
+								<Loader2 className="w-3.5 h-3.5 animate-spin text-purple-400" />
+								<span>Generating Voice...</span>
+							</>
+						) : voiceoverFileName ? (
+							<>
+								<span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+								<span>🎙️ Voice Active</span>
+							</>
+						) : (
+							<>
+								<span>🎙️ Create Voice</span>
+							</>
+						)}
+					</button>
+
 					{/* 1. The Main "Create Video" Button */}
 					<button
 						type="button"
@@ -371,30 +457,62 @@ export default function CapCutPlayer({
 								muted={isCopyrightFreeActive ? false : muteOriginalAudio}
 								controls={false}
 								className="relative z-10 w-full h-full object-contain"
-							style={
-								isCopyrightFreeActive
-									? {} // Video is already rendered with all filters burned-in by FFmpeg
-									: {
-											transform: `${mirror ? "scaleX(-1)" : ""} scale(${
-												blackBgLayer ? scaleRatio : 1
-											}) ${applyZoom ? "scale(1.02)" : ""}`,
-											transformOrigin: "center top",
-											filter: liveFilter,
-									  }
-							}
-							onTimeUpdate={() => {
-								if (videoRef.current && onTimeUpdate) {
-									onTimeUpdate(videoRef.current.currentTime);
+								style={
+									isCopyrightFreeActive
+										? {} // Video is already rendered with all filters burned-in by FFmpeg
+										: {
+												transform: `${mirror ? "scaleX(-1)" : ""} scale(${
+													blackBgLayer ? scaleRatio : 1
+												}) ${applyZoom ? "scale(1.02)" : ""}`,
+												transformOrigin: "center top",
+												filter: liveFilter,
+										  }
 								}
-							}}
-							onLoadedMetadata={() => {
-								if (videoRef.current && onDurationChange) {
-									onDurationChange(videoRef.current.duration);
-								}
-							}}
-							onEnded={() => setIsPlaying(false)}
-							playsInline
-						/>
+								onPlay={() => syncAudios(true)}
+								onPause={() => syncAudios(false)}
+								onTimeUpdate={() => {
+									if (videoRef.current && onTimeUpdate) {
+										onTimeUpdate(videoRef.current.currentTime);
+									}
+								}}
+								onLoadedMetadata={() => {
+									if (videoRef.current && onDurationChange) {
+										onDurationChange(videoRef.current.duration);
+									}
+								}}
+								onSeeked={() => {
+									if (voiceAudioRef.current && videoRef.current) {
+										voiceAudioRef.current.currentTime = videoRef.current.currentTime;
+									}
+									if (bgmAudioRef.current && videoRef.current && bgmAudioRef.current.duration) {
+										bgmAudioRef.current.currentTime = videoRef.current.currentTime % bgmAudioRef.current.duration;
+									}
+								}}
+								onEnded={() => {
+									setIsPlaying(false);
+									syncAudios(false);
+								}}
+								playsInline
+							/>
+
+							{/* Synchronized Live Multi-Track Audio Elements */}
+							{voiceoverFileName && (
+								<audio
+									ref={voiceAudioRef}
+									key={voiceoverFileName}
+									src={`/voiceovers/${voiceoverFileName}`}
+									preload="auto"
+								/>
+							)}
+							{bgmTrackName && (
+								<audio
+									ref={bgmAudioRef}
+									key={bgmTrackName}
+									src={`/bgm/${bgmTrackName}`}
+									preload="auto"
+									loop
+								/>
+							)}
 
 						{/* Big Center Play Arrow Overlay when Paused */}
 						{!isPlaying && (

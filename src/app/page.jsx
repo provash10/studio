@@ -105,6 +105,7 @@ export default function CapCutStudio() {
 	const [videoSpeed, setVideoSpeed] = useState(1.10); // 1.10x video speed boost
 	const [syncVoiceSpeed, setSyncVoiceSpeed] = useState(true);
 	const [creatingStatus, setCreatingStatus] = useState("");
+	const [isGeneratingVoice, setIsGeneratingVoice] = useState(false);
 
 	// Mode Switcher: 'auto' (1-click all safeguards) vs 'manual' (show all sliders & controls)
 	const [editMode, setEditMode] = useState("auto");
@@ -295,7 +296,107 @@ export default function CapCutStudio() {
 		setPreviewMode("raw");
 	};
 
-	// 1. Create Anti-Copyright Video via FFmpeg
+	// 1. Dedicated Direct AI Voice & Captions Generator
+	const handleGenerateVoice = async () => {
+		if (!videoFilename) {
+			alert("Please import or select a video first!");
+			return;
+		}
+
+		setIsGeneratingVoice(true);
+		setErrorMessage("");
+
+		try {
+			let script = "";
+			const scriptRes = await fetch("/api/ai/script", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					prompt: videoTitle || (selectedVoice.startsWith("bn-") ? "ভিডিওটির ড্রামাটিক ক্লাইম্যাক্স ও ধারাভাষ্য" : "Dramatic viral commentary of this scene"),
+					language: selectedVoice.startsWith("bn-") ? "bn" : "en",
+					provider: "auto",
+					videoTitle,
+					videoFilename,
+					videoType,
+					duration: duration || 36,
+					videoSpeed,
+					trimStart: autoTrim40s ? trimStart : 0,
+					trimEnd: autoTrim40s ? trimEnd : 0,
+					cliffhangerHook: cliffhangerHook.enabled ? cliffhangerHook : null,
+				}),
+			});
+			const scriptData = await scriptRes.json();
+			script = scriptData.script || "";
+
+			if (!script) {
+				script = selectedVoice.startsWith("bn-")
+					? "এই ভিডিওটির শেষ পর্যন্ত দেখুন, যা ঘটবে তা কল্পনার বাইরে!"
+					: "Wait until you see what happens next in this incredible video! Watch closely right now!";
+			}
+
+			setCurrentScript(script);
+
+			const savedElevenKey = typeof window !== "undefined" ? localStorage.getItem("studio_elevenlabs_key") : "";
+			const ttsRes = await fetch("/api/ai/tts", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					text: script,
+					provider: voiceProvider,
+					voice: selectedVoice,
+					voiceId: selectedVoice,
+					apiKey: savedElevenKey || undefined,
+					rate: voiceRate,
+				}),
+			});
+			const ttsData = await ttsRes.json();
+			if (ttsData.success && ttsData.fileName) {
+				setVoiceoverFileName(ttsData.fileName);
+				setVoiceoverEnabled(true);
+
+				// Generate matching typewriter auto captions
+				try {
+					const capRes = await fetch("/api/ai/captions", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							text: script,
+							duration: duration || 36,
+							style: autoCaption.style || "typewriter_clean",
+							wordsPerSegment: autoCaption.wordsPerSegment || 3,
+						}),
+					});
+					const capData = await capRes.json();
+					if (capData.success && capData.segments) {
+						setAutoCaption(prev => ({
+							...prev,
+							enabled: true,
+							segments: capData.segments,
+							srt: capData.srt,
+						}));
+					}
+				} catch (e) {
+					console.warn("Caption generation note:", e);
+				}
+
+				// Auto-play sound sample immediately so user hears it!
+				try {
+					const audio = new Audio(`/voiceovers/${ttsData.fileName}`);
+					audio.volume = 1.0;
+					audio.play().catch(() => {});
+				} catch {}
+			} else {
+				alert(ttsData.error || "Failed to synthesize voiceover");
+			}
+		} catch (err) {
+			console.error("Generate voice error:", err);
+			alert(err.message || "Voice generation error");
+		} finally {
+			setIsGeneratingVoice(false);
+		}
+	};
+
+	// 2. Create Anti-Copyright Video via FFmpeg
 	const handleCreateVideo = async (options = {}) => {
 		if (!videoFilename) {
 			alert("Please import or select a video first!");
@@ -575,6 +676,10 @@ export default function CapCutStudio() {
 						autoCaption={autoCaption}
 						setAutoCaption={setAutoCaption}
 						onGenerateAutoCaptions={handleGenerateAutoCaptions}
+						// Voice Generator Direct Action
+						onGenerateVoice={handleGenerateVoice}
+						isGeneratingVoice={isGeneratingVoice}
+						voiceoverFileName={voiceoverFileName}
 						// Audio tools
 						onCreateVideo={handleCreateVideo}
 						isCreatingVideo={isCreatingVideo}
@@ -656,6 +761,15 @@ export default function CapCutStudio() {
 						onTimeUpdate={(t) => setCurrentTime(t)}
 						onDurationChange={(d) => setDuration(d)}
 						seekTime={seekTime}
+						// Voice & Audio Multi-Track Controls
+						voiceoverFileName={voiceoverFileName}
+						voiceoverEnabled={voiceoverEnabled}
+						voiceoverVolume={voiceoverVolume}
+						bgmTrackName={bgmTrackName}
+						bgmEnabled={bgmEnabled}
+						bgmVolume={bgmVolume}
+						onGenerateVoice={handleGenerateVoice}
+						isGeneratingVoice={isGeneratingVoice}
 						// Video Creation & Preview Controls
 						onCreateVideo={handleCreateVideo}
 						isCreatingVideo={isCreatingVideo}
