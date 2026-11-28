@@ -134,17 +134,30 @@ export default function CapCutInspector({
 	};
 
 	const handleGenerateVoice = async () => {
-		if (!scriptText.trim()) {
-			alert("Please click 'Generate Rephrased' first or type your script!");
-			return;
-		}
 		setIsGeneratingVoice(true);
 		try {
+			let textToSynthesize = scriptText?.trim();
+			if (!textToSynthesize) {
+				const sRes = await fetch("/api/ai/script", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						videoFilename,
+						duration: duration || 36,
+						prompt: videoTitle || (selectedVoice?.startsWith("bn-") ? "ভিডিওটির ড্রামাটিক ক্লাইম্যাক্স ও ধারাভাষ্য" : "Dramatic viral commentary of this scene"),
+						language: selectedVoice?.startsWith("bn-") ? "bn" : "en",
+					}),
+				});
+				const sData = await sRes.json();
+				textToSynthesize = sData.script || (selectedVoice?.startsWith("bn-") ? "এই ভিডিওটির শেষ পর্যন্ত দেখুন, যা ঘটবে তা কল্পনার বাইরে!" : "Wait until you see what happens next in this incredible video! Watch closely right now!");
+				setScriptText(textToSynthesize);
+			}
+
 			const res = await fetch("/api/ai/tts", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					text: scriptText,
+					text: textToSynthesize,
 					provider: voiceProvider,
 					voice: selectedVoice,
 					voiceId: selectedVoice,

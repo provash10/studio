@@ -87,7 +87,7 @@ export default function CapCutStudio() {
 	const [currentScript, setCurrentScript] = useState("");
 	const [autoCaption, setAutoCaption] = useState({
 		enabled: true, // Enabled by default for modern viral shorts/reels!
-		style: "viral_yellow", // 'viral_yellow', 'classic_white', 'neon_cyan', 'green_meme'
+		style: "typewriter_clean", // 'typewriter_clean' (Font 9 Bold Italic, no border/bg), 'viral_yellow', 'classic_white', 'neon_cyan', 'green_meme'
 		position: "bottom", // 'bottom', 'center', 'top'
 		scale: 1.0,
 		wordsPerSegment: 3,
@@ -296,7 +296,7 @@ export default function CapCutStudio() {
 	};
 
 	// 1. Create Anti-Copyright Video via FFmpeg
-	const handleCreateVideo = async () => {
+	const handleCreateVideo = async (options = {}) => {
 		if (!videoFilename) {
 			alert("Please import or select a video first!");
 			return;
@@ -306,11 +306,14 @@ export default function CapCutStudio() {
 		setErrorMessage("");
 
 		try {
-			let currentVoice = voiceoverFileName;
+			// If re-creating video or options.forceNewVoice is passed, generate fresh voice & script
+			const shouldSynthesizeVoice = Boolean(options?.forceNewVoice) || !voiceoverFileName || Boolean(processedVideoUrl);
+			let currentVoice = shouldSynthesizeVoice ? null : voiceoverFileName;
 			let voiceActive = voiceoverEnabled;
+			let currentGeneratedScript = currentScript;
 
-			// If no voiceover track has been created yet, automatically generate AI script & synthesize ElevenLabs/TTS voiceover
-			if (!currentVoice) {
+			// Automatically generate AI script & synthesize ElevenLabs/Edge-TTS voiceover
+			if (shouldSynthesizeVoice || !currentVoice) {
 				setCreatingStatus("1/3 Watching video scenes with AI Vision & writing commentary...");
 				let script = "";
 				try {
@@ -343,6 +346,7 @@ export default function CapCutStudio() {
 						: "Wait until you see what happens next in this incredible video! Watch closely right now!";
 				}
 
+				currentGeneratedScript = script;
 				setCurrentScript(script);
 
 				setCreatingStatus("2/3 Synthesizing AI voiceover...");
@@ -366,9 +370,11 @@ export default function CapCutStudio() {
 						voiceActive = true;
 						setVoiceoverFileName(ttsData.fileName);
 						setVoiceoverEnabled(true);
+					} else {
+						console.error("TTS synthesis returned error:", ttsData.error);
 					}
 				} catch (vErr) {
-					console.warn("TTS synthesis note:", vErr);
+					console.error("TTS synthesis note:", vErr);
 				}
 			}
 
@@ -376,13 +382,14 @@ export default function CapCutStudio() {
 			let captionPayload = autoCaption;
 			if (autoCaption.enabled) {
 				try {
+					const textForCaptions = currentGeneratedScript || currentScript || (selectedVoice.startsWith("bn-") ? "ভিডিওটির ক্লাইম্যাক্স মুহূর্ত লক্ষ্য করুন!" : "Wait for it! Watch this incredible video right now!");
 					const capRes = await fetch("/api/ai/captions", {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({
-							text: currentScript || (selectedVoice.startsWith("bn-") ? "ভিডিওটির ক্লাইম্যাক্স মুহূর্ত লক্ষ্য করুন!" : "Wait for it! Watch this incredible video right now!"),
+							text: textForCaptions,
 							duration: duration || 36,
-							style: autoCaption.style,
+							style: autoCaption.style || "typewriter_clean",
 							wordsPerSegment: autoCaption.wordsPerSegment || 3,
 						}),
 					});

@@ -273,7 +273,7 @@ export default function CapCutPlayer({
 					{/* 1. The Main "Create Video" Button */}
 					<button
 						type="button"
-						onClick={onCreateVideo}
+						onClick={() => onCreateVideo && onCreateVideo({ forceNewVoice: true })}
 						disabled={isCreatingVideo || !videoUrl}
 						className={`px-3 py-1 rounded-md text-[11px] font-extrabold flex items-center gap-1.5 shadow transition-all cursor-pointer ${
 							isCreatingVideo
@@ -425,33 +425,43 @@ export default function CapCutPlayer({
 						</div>
 					)}
 
-					{/* Auto Captions (Timed Subtitles Overlay in Live Preview) */}
+					{/* Auto Captions (Timed Subtitles Overlay with Typewriter Animation, Font 9, Bold, Italic, No Border, No BG) */}
 					{autoCaption?.enabled && autoCaption?.segments?.length > 0 && !isCopyrightFreeActive && (() => {
 						const currentSec = currentTime || 0;
 						const activeSegment = autoCaption.segments.find(s => currentSec >= s.start && currentSec <= s.end);
 						if (!activeSegment) return null;
 
-						let posClasses = "bottom-[12%]";
+						let posClasses = "bottom-[11%]";
 						if (autoCaption.position === "center") posClasses = "top-1/2 -translate-y-1/2";
-						else if (autoCaption.position === "top") posClasses = "top-[14%]";
+						else if (autoCaption.position === "top") posClasses = "top-[12%]";
 
-						let styleClasses = "bg-black/90 border-2 border-yellow-400 text-yellow-300 shadow-xl shadow-yellow-950/40";
-						if (autoCaption.style === "classic_white") {
-							styleClasses = "bg-black/85 border border-white/40 text-white font-extrabold drop-shadow-[0_2px_4px_rgba(0,0,0,1)] shadow-xl";
-						} else if (autoCaption.style === "neon_cyan") {
-							styleClasses = "bg-black/90 border-2 border-[#00e5ff] text-[#00e5ff] shadow-[0_0_15px_rgba(0,229,255,0.6)]";
-						} else if (autoCaption.style === "green_meme") {
-							styleClasses = "bg-black/90 border-2 border-emerald-400 text-emerald-300 shadow-[0_0_15px_rgba(34,197,94,0.6)]";
-						}
+						// Typewriter animation: calculate progressive reveal based on playback timestamp
+						const segDur = Math.max(0.1, activeSegment.end - activeSegment.start);
+						const elapsed = Math.max(0, currentSec - activeSegment.start);
+						const progress = Math.min(1.0, elapsed / segDur);
+
+						// Letter-by-letter / word-by-word typewriter slice
+						const totalChars = activeSegment.text.length;
+						const charsToShow = Math.max(1, Math.ceil(totalChars * progress));
+						const typedText = activeSegment.text.slice(0, charsToShow);
+						const isTyping = progress < 1.0;
+
+						const customScale = Number(autoCaption.scale) || 1.0;
+						const renderedFontSize = Math.max(8, Math.round(9 * customScale));
 
 						return (
 							<div
-								className={`absolute left-1/2 -translate-x-1/2 z-30 select-none pointer-events-none px-3.5 py-1.5 rounded-lg text-center font-black tracking-wide uppercase transition-all duration-100 max-w-[88%] whitespace-normal leading-tight ${posClasses} ${styleClasses}`}
+								className={`absolute left-1/2 -translate-x-1/2 z-30 select-none pointer-events-none text-center font-bold italic tracking-wide transition-all duration-75 max-w-[90%] whitespace-normal leading-tight bg-transparent border-0 shadow-none ${posClasses}`}
 								style={{
-									fontSize: `${Math.max(13, Math.round(15 * (Number(autoCaption.scale) || 1.0)))}px`,
+									fontSize: `${renderedFontSize}px`,
+									color: "#ffffff",
+									textShadow: "0 1px 2px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.9)",
 								}}
 							>
-								<span className="drop-shadow-md">{activeSegment.text}</span>
+								<span>{typedText}</span>
+								{isTyping && (
+									<span className="inline-block w-[1.5px] h-[9px] bg-white/90 animate-pulse ml-0.5 align-middle" />
+								)}
 							</div>
 						);
 					})()}

@@ -655,7 +655,7 @@ export default function CapCutMediaLibrary({
 									<div className="pt-2 border-t border-[#212328] flex flex-col gap-1 shrink-0">
 										<button
 											type="button"
-											onClick={onCreateVideo}
+											onClick={() => onCreateVideo && onCreateVideo({ forceNewVoice: true })}
 											disabled={isCreatingVideo || !uploadedVideo}
 											className={`w-full py-2 rounded-md font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer ${
 												isCreatingVideo
@@ -1258,7 +1258,32 @@ export default function CapCutMediaLibrary({
 
 						{/* Style Selector: 4 Visual CapCut Presets */}
 						<div className="mt-2.5 flex flex-col gap-1.5">
-							<span className="text-[10px] font-bold text-slate-300">ক্যাপশন স্টাইল (Caption Style):</span>
+							<span className="text-[10px] font-bold text-slate-300">ক্যাপশন স্টাইল ও অ্যানিমেশন (Caption Style):</span>
+
+							{/* Primary User Style: Typewriter Font 9 Bold Italic (No Border, No BG) */}
+							<button
+								type="button"
+								onClick={() => setAutoCaption && setAutoCaption(prev => ({ ...(prev || {}), style: "typewriter_clean", enabled: true }))}
+								className={`p-2.5 rounded-lg border text-left flex items-center justify-between cursor-pointer transition-all ${
+									(autoCaption?.style === "typewriter_clean" || !autoCaption?.style)
+										? "bg-[#0b171f] border-[#00e5ff] text-[#00e5ff] shadow-md shadow-cyan-950/40 ring-1 ring-[#00e5ff]/50"
+										: "bg-[#141518] border-[#26282f] text-slate-300 hover:border-slate-500"
+								}`}
+							>
+								<div className="flex flex-col">
+									<div className="flex items-center gap-1.5">
+										<span className="text-[11px] font-extrabold text-cyan-300">⌨️ Typewriter Animation</span>
+										<span className="bg-[#00e5ff]/20 text-[#00e5ff] text-[8px] font-bold px-1 rounded">User Custom</span>
+									</div>
+									<span className="text-[9px] text-slate-300 font-bold italic mt-0.5">
+										Font 9 • Bold Italic • No Border • No Background Box
+									</span>
+								</div>
+								<span className="text-white font-bold italic text-[9px] drop-shadow-[0_1px_2px_rgba(0,0,0,1)] tracking-wider">
+									Wait for it... |
+								</span>
+							</button>
+
 							<div className="grid grid-cols-2 gap-1.5">
 								{/* Viral Yellow */}
 								<button
@@ -1271,10 +1296,10 @@ export default function CapCutMediaLibrary({
 									}`}
 								>
 									<div className="flex flex-col">
-										<span className="text-[10.5px] font-extrabold text-yellow-300">🟡 Viral Yellow</span>
-										<span className="text-[8.5px] text-slate-400">Shorts / Hormozi Style</span>
+										<span className="text-[10px] font-extrabold text-yellow-300">🟡 Viral Yellow</span>
+										<span className="text-[8px] text-slate-400">Shorts / Hormozi Style</span>
 									</div>
-									<span className="px-1.5 py-0.5 rounded bg-black text-yellow-300 font-black text-[9px] border border-yellow-400">
+									<span className="px-1 py-0.5 rounded bg-black text-yellow-300 font-black text-[9px] border border-yellow-400">
 										WAIT!
 									</span>
 								</button>
@@ -1290,10 +1315,10 @@ export default function CapCutMediaLibrary({
 									}`}
 								>
 									<div className="flex flex-col">
-										<span className="text-[10.5px] font-extrabold text-white">⚪ Classic White</span>
-										<span className="text-[8.5px] text-slate-400">Clean YouTube Outline</span>
+										<span className="text-[10px] font-extrabold text-white">⚪ Classic White</span>
+										<span className="text-[8px] text-slate-400">Clean YouTube Outline</span>
 									</div>
-									<span className="px-1.5 py-0.5 rounded bg-black/80 text-white font-black text-[9px] border border-white/50">
+									<span className="px-1 py-0.5 rounded bg-black/80 text-white font-black text-[9px] border border-white/50">
 										LOOK!
 									</span>
 								</button>
@@ -1309,10 +1334,10 @@ export default function CapCutMediaLibrary({
 									}`}
 								>
 									<div className="flex flex-col">
-										<span className="text-[10.5px] font-extrabold text-[#00e5ff]">🔵 Neon Cyan</span>
-										<span className="text-[8.5px] text-slate-400">Glow & Tech Style</span>
+										<span className="text-[10px] font-extrabold text-[#00e5ff]">🔵 Neon Cyan</span>
+										<span className="text-[8px] text-slate-400">Glow & Tech Style</span>
 									</div>
-									<span className="px-1.5 py-0.5 rounded bg-black text-[#00e5ff] font-black text-[9px] border border-[#00e5ff]">
+									<span className="px-1 py-0.5 rounded bg-black text-[#00e5ff] font-black text-[9px] border border-[#00e5ff]">
 										CYAN!
 									</span>
 								</button>
@@ -1328,10 +1353,10 @@ export default function CapCutMediaLibrary({
 									}`}
 								>
 									<div className="flex flex-col">
-										<span className="text-[10.5px] font-extrabold text-emerald-300">🟢 Vibrant Green</span>
-										<span className="text-[8.5px] text-slate-400">Viral Action Highlight</span>
+										<span className="text-[10px] font-extrabold text-emerald-300">🟢 Vibrant Green</span>
+										<span className="text-[8px] text-slate-400">Viral Action Highlight</span>
 									</div>
-									<span className="px-1.5 py-0.5 rounded bg-black text-emerald-300 font-black text-[9px] border border-emerald-400">
+									<span className="px-1 py-0.5 rounded bg-black text-emerald-300 font-black text-[9px] border border-emerald-400">
 										FIRE!
 									</span>
 								</button>

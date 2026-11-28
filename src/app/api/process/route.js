@@ -3,7 +3,7 @@ import path from "node:path";
 import os from "node:os";
 import fs from "node:fs/promises";
 import { runFFmpeg, probeVideo } from "@/lib/ffmpeg";
-import { convertSegmentsToSRT, getASSForceStyle } from "@/services/ai/captionService";
+import { convertSegmentsToSRT, convertSegmentsToTypewriterSRT, getASSForceStyle } from "@/services/ai/captionService";
 
 export async function POST(request) {
 	try {
@@ -196,17 +196,38 @@ export async function POST(request) {
 		let voiceInputIdx = -1;
 		let voiceDuration = 0;
 		if (voiceoverEnabled && voiceoverFileName) {
-			const voicePath = path.join(voiceDir, voiceoverFileName);
-			try {
-				await fs.access(voicePath);
-				const voiceMeta = await probeVideo(voicePath);
-				voiceDuration = voiceMeta.duration || 0;
-				ffmpegArgs.push("-i", voicePath);
-				voiceInputIdx = currentInputIndex++;
-			} catch (e) {
+			const cleanName = path.basename(voiceoverFileName);
+			const candidatePaths = [
+				path.join(voiceDir, cleanName),
+				path.join(process.cwd(), "public", "temp", cleanName),
+				path.join(process.cwd(), "public", cleanName),
+				path.isAbsolute(voiceoverFileName) ? voiceoverFileName : null,
+			].filter(Boolean);
+
+			let foundVoicePath = null;
+			for (const cand of candidatePaths) {
+				try {
+					await fs.access(cand);
+					foundVoicePath = cand;
+					break;
+				} catch {}
+			}
+
+			if (foundVoicePath) {
+				try {
+					const voiceMeta = await probeVideo(foundVoicePath);
+					voiceDuration = voiceMeta.duration || 0;
+					ffmpegArgs.push("-i", foundVoicePath);
+					voiceInputIdx = currentInputIndex++;
+					console.log("Attached voiceover track successfully:", foundVoicePath, `duration: ${voiceDuration}s`);
+				} catch (e) {
+					console.warn("Error probing voiceover track:", foundVoicePath, e.message);
+				}
+			} else {
 				console.warn(
-					"Voiceover track not found, skipping voiceover input:",
-					voicePath,
+					"Voiceover track not found in any candidate path:",
+					voiceoverFileName,
+					candidatePaths,
 				);
 			}
 		}
@@ -338,20 +359,27 @@ export async function POST(request) {
 			baseV = "[vstick]";
 		}
 
-		// 6.7 Auto Captions (Timed Subtitles Overlay with CapCut Force Style)
+		// 6.7 Auto Captions (Timed Subtitles Overlay with Typewriter Animation, Font 9, Bold Italic, No Border, No BG)
 		if (autoCaption && autoCaption.enabled && (autoCaption.segments?.length || autoCaption.srt)) {
-			const srtContent = autoCaption.srt || convertSegmentsToSRT(autoCaption.segments);
+			// Generate progressive typewriter SRT when segments are present
+			const srtContent = autoCaption.segments?.length
+				? convertSegmentsToTypewriterSRT(autoCaption.segments)
+				: (autoCaption.srt || convertSegmentsToSRT(autoCaption.segments));
+
 			if (srtContent && srtContent.trim()) {
 				const uploadDir = path.join(process.cwd(), "public", "uploads");
 				const tempCaptionPath = path.join(uploadDir, `caption_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.srt`);
 				await fs.writeFile(tempCaptionPath, srtContent, "utf-8");
 				tempFilesToClean.push(tempCaptionPath);
 
-				const captionFontSize = Math.max(16, Math.round(tH * 0.038 * (Number(autoCaption.scale) || 1.0)));
+				// User requested: Font 9, Bold, Italic, Typewriter, No border, No bg color
+				const captionFontSize = Math.max(10, Math.min(14, Math.round(tH * 0.018 * (Number(autoCaption.scale) || 1.0))));
 				const forceStyle = getASSForceStyle({
-					style: autoCaption.style || "viral_yellow",
+					style: autoCaption.style || "typewriter_clean",
 					fontSize: captionFontSize,
 					position: autoCaption.position || "bottom",
+					bold: true,
+					italic: true,
 				});
 
 				// Normalize path for FFmpeg subtitles filter on Windows: replace \ with / and escape colon
